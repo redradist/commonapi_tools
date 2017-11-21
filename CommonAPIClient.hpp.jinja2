@@ -46,7 +46,7 @@ class {{class_name}}
   {%- endif -%}
   request{{method}}(
       {%- for input in method.inputs -%}
-        {{input.type}} const & _{{input.name}}
+        {{input.type}} const & _{{input.name}}{{ ", " if not loop.last }}
       {%- endfor -%}
   );
   {%- endfor %}
@@ -67,6 +67,7 @@ class {{class_name}}
   ) {
     // Default implementation.
     // If you need you may override response{{method}}
+    // This method will be called in thread of IComponent
   }
   {%- endif %}
   {%- endfor %}
@@ -95,6 +96,7 @@ class {{class_name}}
   ) {
     // Default implementation.
     // If you need you may override informationOn{{broadcast}}
+    // This method will be called in thread of IComponent
   }
   {%- endfor %}
   {% endif %}
@@ -116,6 +118,7 @@ class {{class_name}}
   virtual void on{{attribute}}Changed({{attribute.type}} const & _{{attribute.name}}) {
     // Default implementation.
     // If you need you may override on{{attribute}}
+    // This method will be called in thread of IComponent
   }
   {%- endfor %}
   {% endif %}

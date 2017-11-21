@@ -228,3 +228,12 @@ if __name__ == '__main__':
             files_output = template.render(interface=interface,
                                            class_name="MyFirstClient")
             print(files_output)
+    print("========================================")
+    with open("./CommonAPIService.hpp.jinja2", 'r') as file:
+        lines = file.readlines()
+        lines = "".join(lines)
+        for interface in interfaces:
+            template = Template(lines)
+            files_output = template.render(interface=interface,
+                                           class_name="MyFirstClient")
+            print(files_output)
