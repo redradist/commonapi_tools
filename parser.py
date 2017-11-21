@@ -216,6 +216,11 @@ def parse_attributes(interface_body):
 
 
 if __name__ == '__main__':
+    import datetime
+
+    current_datetime = datetime.datetime.now()
+    current_date = current_datetime.strftime("%d %b %Y")
+
     interfaces = parse_interfaces(__test_fidl)
     for interface in interfaces:
         print(str(interface))
@@ -226,7 +231,8 @@ if __name__ == '__main__':
         for interface in interfaces:
             template = Template(lines)
             files_output = template.render(interface=interface,
-                                           class_name="MyFirstClient")
+                                           class_name="MyFirstClient",
+                                           date=current_date)
             print(files_output)
     print("========================================")
     with open("./CommonAPIService.hpp.jinja2", 'r') as file:
@@ -235,5 +241,6 @@ if __name__ == '__main__':
         for interface in interfaces:
             template = Template(lines)
             files_output = template.render(interface=interface,
-                                           class_name="MyFirstClient")
+                                           class_name="MyFirstClient",
+                                           date=current_date)
             print(files_output)

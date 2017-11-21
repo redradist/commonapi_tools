@@ -8,9 +8,9 @@
 {%- set class_name = service_name+'Service' -%}
 /**
  * @file {{class_name}}.hpp
- * @date 25 Jun 2017
- * @brief It is an auto-generated code.
- * It contains wrappers on requests and receiving notification for broadcasts and attribute changes
+ * @date {{date}}
+ * @brief It is an auto-generated file.
+ * It contains wrappers on receiving requests
  * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
@@ -50,6 +50,7 @@ class {{class_name}}
   ) override;
   {%- endfor %}
   {% endif %}
+ protected:
   {%- if methods is not none and methods|length > 0 %}
   /***************************************
    * Below methods for receiving requests in IComponent thread
@@ -84,7 +85,7 @@ void {{class_name}}::{{method.name}}(const std::shared_ptr<CommonAPI::ClientId> 
 {{ ", "}}{{method.name}}Reply_t _reply
 {%- endif -%}
 ) {
-  push([=] {
+  invoke([=] {
     request{{method}}(_client
     {%- if method.inputs is not none -%}
     {{ ", " }}{%- for input in method.inputs -%}
