@@ -32,7 +32,7 @@ class {{class_name}}
  public:
   using icc::commonapi::CommonAPIService< v{{service_version}}::{{package_ns}}::{{service_name}}StubDefault >::CommonAPIService;
 
- protected:
+ public:
   {%- if methods is not none and methods|length > 0 %}
   /***************************************
    * Below methods for receiving requests
