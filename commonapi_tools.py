@@ -1,5 +1,7 @@
+import datetime
 import re
 
+import itertools
 from jinja2 import Template
 from commonapi import Interface, Method, Parameter, Broadcast, Attribute
 
@@ -35,9 +37,6 @@ __interface_regex = "interface\s+(\w+)\s*\{([" + \
                     __interface_allowed_chars + r"]*)*[" + \
                     __interface_allowed_chars + r"\.\[\]]*)\}"
 __interface_raw_regex = "interface\s+(\w+)\s*(\{[\w\s\<\>\*\@\:\.\[\]]*([\w\s\<\>\*\@\:]*\{[\w\s\<\>\*\@\:]*([\w\s\<\>\*\@\:]*\{[\w\s\<\>\*\@\:\.\[\]]*?\}[\w\s\<\>\*\@\:]*)*[\w\s\<\>\*\@\:]*\}[\w\s\<\>\*\@\:]*)*[\w\s\<\>\*\@\:\.\[\]]*\})"
-"interface\s+(\w+)\s*(\{[\w\s\.\[\]]*([\w\s]*\{[\w\s]*([\w\s]*\{[\w\s\.\[\]]*?\}[\w\s]*)*[\w\s]*\}[\w\s]*)*[\w\s\.\[\]]*\})"
-"interface\s+(\w+)\s*(\{[\w\s\.]*([\w\s]*\{[\w\s]*([\w\s]*\{[\w\s\.\[\]]*?\}[\w\s]*)*[\w\s]*\}[\w\s]*)*[\w\s\.]*\})"
-"interface\s+(\w+)\s*(\{[\w\s]*([\w\s]*\{[\w\s]*([\w\s]*\{[\w\s\.]*?\}[\w\s]*)*[\w\s]*\}[\w\s]*)*[\w\s]*\})"
 __interface = re.compile(__interface_regex)
 __package_regex = r"package\s+([\.\w]+)"
 __package = re.compile(__package_regex)
@@ -46,6 +45,57 @@ __test_fidl = """
 package commonapi
 
 interface HelloWorld {
+  version {major 1 minor 0}
+
+  method sayHello {
+    in {
+      String name
+    }
+    out {
+      String result
+    }
+  }
+
+  method sayHello2 fireAndForget {
+    in {
+      String name
+    }
+  }
+
+  method setSettings {
+    in {
+      Int32 [] setting
+    }
+    out {
+      Int32 result
+    }
+  }
+
+  method setSettings2 {
+    in {
+      Int32 [] setting
+    }
+    out {
+      Int32 result
+    }
+  }
+
+  broadcast NewName {
+  out {
+    String name
+    }
+  }
+
+  broadcast NewName2 {
+  out {
+    String name
+    }
+  }
+
+  attribute Int32 aa
+}
+
+interface HelloWorld2 {
   version {major 1 minor 0}
 
   method sayHello {
@@ -104,28 +154,31 @@ def parse_interfaces(fidl_file):
     :param fidl_file:
     :return: Raw interfaces
     """
-    package_name = __package.findall(__test_fidl)
-    interfaces = []
-    interfaces_meta = __interface.findall(__test_fidl)
-    if interfaces_meta:
-        for interface_meta in interfaces_meta:
-            interface_name = interface_meta[0]
-            interface_body = interface_meta[1]
-            interface = Interface(interface_name)
-            version_meta = __version.findall(interface_body)
-            if version_meta:
-                print(version_meta)
-                interface.set_major(version_meta[0][0])
-                interface.set_minor(version_meta[0][1])
-            methods = parse_methods(interface_body)
-            interface.methods = methods
-            broadcasts = parse_broadcasts(interface_body)
-            interface.broadcasts = broadcasts
-            attributes = parse_attributes(interface_body)
-            interface.attributes = attributes
-            interface.set_package_name(package_name[0])
-            interfaces.append(interface)
-    return interfaces
+    with open(fidl_file, 'r') as file:
+        file_lines = file.readlines()
+        file_lines = "".join(file_lines)
+        print(file_lines)
+        package_name = __package.findall(file_lines)
+        interfaces = []
+        interfaces_meta = __interface.findall(file_lines)
+        if interfaces_meta:
+            for interface_meta in interfaces_meta:
+                interface_name = interface_meta[0]
+                interface_body = interface_meta[1]
+                interface = Interface(interface_name)
+                version_meta = __version.findall(interface_body)
+                if version_meta:
+                    interface.set_major(version_meta[0][0])
+                    interface.set_minor(version_meta[0][1])
+                methods = parse_methods(interface_body)
+                interface.methods = methods
+                broadcasts = parse_broadcasts(interface_body)
+                interface.broadcasts = broadcasts
+                attributes = parse_attributes(interface_body)
+                interface.attributes = attributes
+                interface.set_package_name(package_name[0])
+                interfaces.append(interface)
+        return interfaces
 
 
 def parse_methods(interface_body):
@@ -149,7 +202,6 @@ def parse_methods(interface_body):
                     parameter_type = parameter[1]
                     parameter_name = parameter[3]
                     param = Parameter(parameter_type, parameter_name)
-                    print(str(param))
                     method.inputs.append(param)
 
             if method_without_reply != "fireAndForget":
@@ -160,8 +212,6 @@ def parse_methods(interface_body):
                     for parameter in parameters:
                         parameter_type = parameter[1]
                         parameter_name = parameter[3]
-                        print("Parameter type is " + str(parameter_type))
-                        print("Parameter name is " + str(parameter_name))
                         method.outputs.append(Parameter(parameter_type, parameter_name))
             methods.append(method)
     else:
@@ -179,9 +229,6 @@ def parse_broadcasts(interface_body):
     broadcasts_meta = __broadcast.findall(interface_body)
     if broadcasts_meta:
         for broadcast_meta in broadcasts_meta:
-            print("Broadcast name is " + str(broadcast_meta[0]))
-            print("Broadcast body is " + str(broadcast_meta[1]))
-
             broadcast_name = broadcast_meta[0]
             broadcast_body = broadcast_meta[1]
             parameters = __parameter.findall(broadcast_body)
@@ -215,32 +262,40 @@ def parse_attributes(interface_body):
     return attributes
 
 
-if __name__ == '__main__':
-    import datetime
+def generate_commonapi_wrappers(fidl_file, dir_to_save, wrappers_names=[]):
+    interfaces = parse_interfaces(fidl_file)
+
+    if len(interfaces) == 0:
+        raise ValueError("Size of interfaces is zero. No work to do man !?")
 
     current_datetime = datetime.datetime.now()
     current_date = current_datetime.strftime("%d %b %Y")
 
-    interfaces = parse_interfaces(__test_fidl)
-    for interface in interfaces:
-        print(str(interface))
-    print("========================================")
     with open("./CommonAPIClient.hpp.jinja2", 'r') as file:
         lines = file.readlines()
         lines = "".join(lines)
-        for interface in interfaces:
+        for interface, wrapper_name in itertools.zip_longest(interfaces, wrappers_names):
             template = Template(lines)
             files_output = template.render(interface=interface,
-                                           class_name="MyFirstClient",
                                            date=current_date)
-            print(files_output)
-    print("========================================")
+            if wrapper_name is None:
+                wrapper_name = interface.name
+            with open(dir_to_save + wrapper_name + "Client.hpp", mode='w') as file_to_save:
+                file_to_save.write(files_output)
+
     with open("./CommonAPIService.hpp.jinja2", 'r') as file:
         lines = file.readlines()
         lines = "".join(lines)
-        for interface in interfaces:
+        for interface, wrapper_name in itertools.zip_longest(interfaces, wrappers_names):
             template = Template(lines)
             files_output = template.render(interface=interface,
-                                           class_name="MyFirstClient",
                                            date=current_date)
-            print(files_output)
+            if wrapper_name is None:
+                wrapper_name = interface.name
+            with open(dir_to_save + wrapper_name + "Service.hpp", mode='w') as file_to_save:
+                file_to_save.write(files_output)
+
+
+if __name__ == '__main__':
+    generate_commonapi_wrappers("/home/redra/Projects/ICC/examples/CommonAPI_Server/interfaces/HelloWorld.fidl",
+                                "/home/redra/Projects/ICC/examples/CommonAPI_Server/")

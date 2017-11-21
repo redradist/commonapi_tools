@@ -18,7 +18,6 @@ def _cpp_type_from(type):
     real_type = None
     matchs = _type_regex.findall(type)
     if matchs:
-        print(str(matchs))
         if matchs[0]:
             if matchs[0][0]:
                 real_type = matchs[0][0]
@@ -33,7 +32,6 @@ def _cpp_type_from(type):
     real_type = real_type.replace("Int32", "int32_t")
     real_type = real_type.replace("UInt32", "uint32_t")
     real_type = real_type.replace("String", "std::string")
-    print("real_type is " + real_type)
     if is_array:
         return 'std::vector<' + real_type + '>'
     else:
