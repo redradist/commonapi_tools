@@ -1,3 +1,4 @@
+import argparse
 import datetime
 import re
 import itertools
@@ -261,7 +262,10 @@ def parse_attributes(interface_body):
     return attributes
 
 
-def generate_commonapi_wrappers(fidl_file, dir_to_save, wrappers_names=[]):
+def generate_commonapi_wrappers(templates, fidl_file, dir_to_save, wrappers_names=[]):
+    if len(templates) != 2:
+        raise ValueError("Size of templates argument should be 2 : CommonAPI Client and CommonAPI Service")
+
     interfaces = parse_interfaces(fidl_file)
 
     if len(interfaces) == 0:
@@ -270,7 +274,7 @@ def generate_commonapi_wrappers(fidl_file, dir_to_save, wrappers_names=[]):
     current_datetime = datetime.datetime.now()
     current_date = current_datetime.strftime("%d %b %Y")
 
-    with open("./CommonAPIClient.hpp.jinja2", 'r') as file:
+    with open(templates[0], 'r') as file:
         lines = file.readlines()
         lines = "".join(lines)
         for interface, wrapper_name in itertools.zip_longest(interfaces, wrappers_names):
@@ -282,7 +286,7 @@ def generate_commonapi_wrappers(fidl_file, dir_to_save, wrappers_names=[]):
             with open(dir_to_save + wrapper_name + "Client.hpp", mode='w') as file_to_save:
                 file_to_save.write(files_output)
 
-    with open("./CommonAPIService.hpp.jinja2", 'r') as file:
+    with open(templates[1], 'r') as file:
         lines = file.readlines()
         lines = "".join(lines)
         for interface, wrapper_name in itertools.zip_longest(interfaces, wrappers_names):
@@ -296,5 +300,18 @@ def generate_commonapi_wrappers(fidl_file, dir_to_save, wrappers_names=[]):
 
 
 if __name__ == '__main__':
-    generate_commonapi_wrappers("/home/redra/Projects/ICC/examples/CommonAPI_Server/interfaces/HelloWorld.fidl",
-                                "/home/redra/Projects/ICC/examples/CommonAPI_Server/")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("capi_interface",
+                        help="CommonAPI interface /<path>/<name>.fidl")
+    parser.add_argument("dir_to_save",
+                        help="CommonAPI /<path_to_generate>/")
+    parser.add_argument("--capi_client",
+                        help="Template for generating CommonAPI Client",
+                        default="./CommonAPIClientDefault.hpp.jinja2")
+    parser.add_argument("--capi_service",
+                        help="Template for generating CommonAPI Service",
+                        default="./CommonAPIServiceDefault.hpp.jinja2")
+    args = parser.parse_args()
+    generate_commonapi_wrappers([args.capi_client, args.capi_service],
+                                args.capi_interface,
+                                args.dir_to_save)

@@ -10,7 +10,9 @@
  * @file {{class_name}}.hpp
  * @date {{date}}
  * @brief It is an auto-generated file.
- * It contains wrappers on requests and receiving notification for broadcasts and attribute changes
+ * It example of template for CommonAPI Client.
+ * This class is not ready for production use.
+ * See project ICC: https://github.com/redradist/Inter-Component-Communication.git where it is more mature
  * @copyright Denis Kotov, MIT License. Open source: https://github.com/redradist/Inter-Component-Communication.git
  */
 
@@ -22,16 +24,13 @@
 #include <map>
 #include <memory>
 #include <functional>
-#include <IComponent.hpp>
 #include <v{{client_version}}/{{package_fs}}/{{client_name}}Proxy.hpp>
-#include <commonapi/CommonAPIClient.hpp>
 
 class {{class_name}}
-  : public virtual icc::IComponent,
-    public icc::commonapi::CommonAPIClient< v{{client_version}}::{{package_ns}}::{{client_name}}Proxy > {
+  : public v{{client_version}}::{{package_ns}}::{{client_name}}Proxy {
  public:
-  explicit {{class_name}}(const std::string & _domain, const std::string & _instance);
-  virtual ~{{class_name}}();
+  using v{{client_version}}::{{package_ns}}::{{client_name}}Proxy::{{client_name}}Proxy;
+  virtual ~{{class_name}}() = default;
 
  public:
   {%- if methods is not none and methods|length > 0 %}
@@ -163,13 +162,11 @@ inline std::future<CommonAPI::CallStatus>
       {{output.type}} const & _{{output.name}}{{ ", " if not loop.last }}
   {%- endfor -%}
   ) {
-    push([=] {
-      response{{method}}(_callStatus{{ ", " if method.outputs }}
-      {%- for output in method.outputs -%}
-          _{{output.name}}{{ ", " if not loop.last }}
-      {%- endfor -%}
-      );
-    });
+    response{{method}}(_callStatus{{ ", " if method.outputs }}
+    {%- for output in method.outputs -%}
+        _{{output.name}}{{ ", " if not loop.last }}
+    {%- endfor -%}
+    );
   });
 }
 {%- else %}
@@ -199,33 +196,29 @@ inline CommonAPI::CallStatus
 {%- for broadcast in broadcasts %}
 inline
 void {{class_name}}::notifyOn{{broadcast}}Update(const bool isNotify) {
-  invoke([=] {
-    if (isNotify) {
-      if (kEmptySubscription == on_{{broadcast.lower()}}_update_) {
-        on_{{broadcast.lower()}}_update_ = get{{broadcast}}Event().subscribe(
-        [=] (
+  if (isNotify) {
+    if (kEmptySubscription == on_{{broadcast.lower()}}_update_) {
+      on_{{broadcast.lower()}}_update_ = get{{broadcast}}Event().subscribe(
+      [=] (
+      {%- if broadcast.parameters is not none -%}
+      {%- for parameter in broadcast.parameters -%}
+          {{parameter.type}} const & _{{parameter.name}}{{ ", " if not loop.last }}
+      {%- endfor -%}
+      {%- endif -%}
+      ) {
+        informationOn{{broadcast}}(
         {%- if broadcast.parameters is not none -%}
         {%- for parameter in broadcast.parameters -%}
-            {{parameter.type}} const & _{{parameter.name}}{{ ", " if not loop.last }}
+            _{{parameter.name}}{{ ", " if not loop.last }}
         {%- endfor -%}
         {%- endif -%}
-        ) {
-          push([=] {
-            informationOn{{broadcast}}(
-            {%- if broadcast.parameters is not none -%}
-            {%- for parameter in broadcast.parameters -%}
-                _{{parameter.name}}{{ ", " if not loop.last }}
-            {%- endfor -%}
-            {%- endif -%}
-            );
-          });
-        });
-      } else if (kEmptySubscription != on_{{broadcast.lower()}}_update_) {
-        get{{broadcast}}Event().unsubscribe(on_{{broadcast.lower()}}_update_);
-        on_{{broadcast.lower()}}_update_ = kEmptySubscription;
-      }
+        );
+      });
+    } else if (kEmptySubscription != on_{{broadcast.lower()}}_update_) {
+      get{{broadcast}}Event().unsubscribe(on_{{broadcast.lower()}}_update_);
+      on_{{broadcast.lower()}}_update_ = kEmptySubscription;
     }
-  });
+  }
 }
 {% endfor %}
 {%- endif %}
@@ -234,21 +227,17 @@ void {{class_name}}::notifyOn{{broadcast}}Update(const bool isNotify) {
 {%- for attribute in attributes %}
 inline
 void {{class_name}}::notifyOn{{attribute}}Changed(const bool isNotify) {
-  invoke([=] {
-    if (isNotify) {
-      if (kEmptySubscription == on_{{attribute.lower()}}_changed_) {
-        on_{{attribute.lower()}}_changed_ = get{{attribute}}Attribute().getChangedEvent().subscribe(
-        [=] ({{attribute.type}} const & _{{attribute.name}}) {
-          push([=] {
-            on{{attribute}}Changed(_{{attribute.name}});
-          });
-        });
-      } else if (kEmptySubscription != on_{{attribute.lower()}}_changed_) {
-        get{{attribute}}Attribute().getChangedEvent().unsubscribe(on_{{attribute.lower()}}_changed_);
-        on_{{attribute.lower()}}_changed_ = kEmptySubscription;
-      }
+  if (isNotify) {
+    if (kEmptySubscription == on_{{attribute.lower()}}_changed_) {
+      on_{{attribute.lower()}}_changed_ = get{{attribute}}Attribute().getChangedEvent().subscribe(
+      [=] ({{attribute.type}} const & _{{attribute.name}}) {
+        on{{attribute}}Changed(_{{attribute.name}});
+      });
+    } else if (kEmptySubscription != on_{{attribute.lower()}}_changed_) {
+      get{{attribute}}Attribute().getChangedEvent().unsubscribe(on_{{attribute.lower()}}_changed_);
+      on_{{attribute.lower()}}_changed_ = kEmptySubscription;
     }
-  });
+  }
 }
 {% endfor %}
 {%- endif %}
