@@ -1,7 +1,7 @@
 import datetime
 import re
-
 import itertools
+
 from jinja2 import Template
 from commonapi import Interface, Method, Parameter, Broadcast, Attribute
 
@@ -157,7 +157,6 @@ def parse_interfaces(fidl_file):
     with open(fidl_file, 'r') as file:
         file_lines = file.readlines()
         file_lines = "".join(file_lines)
-        print(file_lines)
         package_name = __package.findall(file_lines)
         interfaces = []
         interfaces_meta = __interface.findall(file_lines)
