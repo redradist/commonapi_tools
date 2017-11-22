@@ -266,8 +266,12 @@ def generate_commonapi_wrappers(templates, fidl_file, dir_to_save, wrappers_name
     if len(templates) != 2:
         raise ValueError("Size of templates argument should be 2 : CommonAPI Client and CommonAPI Service")
 
-    interfaces = parse_interfaces(fidl_file)
+    if len(dir_to_save) == 0:
+        raise ValueError("dir_to_save is empty !!")
+    elif dir_to_save[len(dir_to_save)-1] != '/':
+        dir_to_save += '/'
 
+    interfaces = parse_interfaces(fidl_file)
     if len(interfaces) == 0:
         raise ValueError("Size of interfaces is zero. No work to do man !?")
 
