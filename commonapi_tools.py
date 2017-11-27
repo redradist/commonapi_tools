@@ -135,22 +135,17 @@ def parse_interfaces(fidl_file):
     :param fidl_file:
     :return: Raw interfaces
     """
-    if True:
-    #with open(fidl_file, 'r') as file:
-        # file_lines = file.readlines()
-        # file_lines = "".join(file_lines)
-        file_lines = __test_fidl
+    with open(fidl_file, 'r') as file:
+        file_lines = file.readlines()
+        file_lines = "".join(file_lines)
         package_name = __package.findall(file_lines)
         interfaces = []
         interfaces_meta = __interface.findall(file_lines)
         if interfaces_meta:
             for interface_meta in interfaces_meta:
-                print("interface_meta is " + str(interface_meta))
                 if interface_meta[2] == 'interface':
                     interface_name = interface_meta[3]
                     interface_body = interface_meta[4]
-                    print("interface_name is " + str(interface_name))
-                    print("interface_body is " + str(interface_body))
                     interface = Interface(interface_name)
                     version_meta = __interface_version.findall(interface_body)
                     if version_meta:
@@ -180,9 +175,6 @@ def parse_methods(interface_body):
             method_name = method_meta[2]
             method_without_reply = method_meta[3]
             method_body = method_meta[4]
-            print("method_name is " + str(method_name))
-            print("method_without_reply is " + str(method_without_reply))
-            print("method_body is " + str(method_body))
             method = Method(method_name)
             in_parameters = __in_parameter.findall(method_body)
             for in_parameter in in_parameters:
@@ -191,24 +183,18 @@ def parse_methods(interface_body):
                     for parameter in parameters:
                         parameter_type = parameter[3]
                         parameter_name = parameter[5]
-                        print("parameter_type is " + str(parameter_type))
-                        print("parameter_name is " + str(parameter_name))
                         param = Parameter(parameter_type, parameter_name)
                         method.inputs.append(param)
 
             if method_without_reply != "fireAndForget":
                 method.outputs = []
                 out_parameters = __out_parameter.findall(method_body)
-                print("out_parameters is " + str(out_parameters))
                 for out_parameter in out_parameters:
-                    print("out_parameter is "+str(out_parameter))
                     if out_parameter[0]:
                         parameters = __parameter.findall(out_parameter[0])
                         for parameter in parameters:
                             parameter_type = parameter[3]
                             parameter_name = parameter[5]
-                            print("parameter_type is " + str(parameter_type))
-                            print("parameter_name is " + str(parameter_name))
                             method.outputs.append(Parameter(parameter_type, parameter_name))
             methods.append(method)
     else:
@@ -228,20 +214,14 @@ def parse_broadcasts(interface_body):
         for broadcast_meta in broadcasts_meta:
             broadcast_name = broadcast_meta[2]
             broadcast_body = broadcast_meta[3]
-            print("broadcast_name is "+broadcast_name)
-            print("broadcast_body is "+broadcast_body)
             broadcast = Broadcast(broadcast_name)
             out_parameters = __out_parameter.findall(broadcast_body)
-            print("out_parameters is " + str(out_parameters))
             for out_parameter in out_parameters:
-                print("out_parameter is " + str(out_parameter))
                 if out_parameter[0]:
                     parameters = __parameter.findall(out_parameter[0])
                     for parameter in parameters:
                         parameter_type = parameter[3]
                         parameter_name = parameter[5]
-                        print("parameter_type is " + str(parameter_type))
-                        print("parameter_name is " + str(parameter_name))
                         broadcast.parameters.append(Parameter(parameter_type, parameter_name))
             broadcasts.append(broadcast)
     else:
@@ -258,12 +238,9 @@ def parse_attributes(interface_body):
     attributes = []
     attributes_meta = __attribute.findall(interface_body)
     if attributes_meta:
-        print("attributes_meta is " + str(attributes_meta))
         for attribute_meta in attributes_meta:
             attribute_type = attribute_meta[2]
             attribute_name = attribute_meta[4]
-            print("attribute_type is " + str(attribute_type))
-            print("attribute_name is " + str(attribute_name))
             attribute = Attribute(attribute_type, attribute_name)
             attributes.append(attribute)
     else:
