@@ -9,16 +9,19 @@ from commonapi import Interface, Method, Parameter, Broadcast, Attribute
 __comments_regex = r"(\<\*\*([^(\*\*\>)])*\*\*\>)?"
 __comments = re.compile(__comments_regex)
 __type_regex = r"[\.\w]+\s*(\[\])?"
-__parameter_regex = r"\s*" + __comments_regex + r"\s*((" + __type_regex + r")\s+(\w+)\s*)\s*"
+__parameter_regex = r"\s*" + __comments_regex + r"\s*((" + __type_regex + r")\s+(\w+)\s*)\s*(//.*)?\s*"
 __parameter = re.compile(__parameter_regex)
 __in_parameter_regex = r"\s*in\s*\{((" + __parameter_regex + r")*)?\}\s*"
 __in_parameter = re.compile(__in_parameter_regex)
 __out_parameter_regex = r"\s*out\s*\{((" + __parameter_regex + r")*)?\}\s*"
 __out_parameter = re.compile(__out_parameter_regex)
+__error_parameter_regex = r"\s*error [\{]?\s*([\w.]+)\s*[\}]?\s*"
+__error_parameter = re.compile(__error_parameter_regex)
 __method_regex = r"\s*" + __comments_regex + r"\s*method\s+(\w+)\s*(fireAndForget)?" + \
                  r"\s*\{\s*(" + \
                  r"(" + __in_parameter_regex + r")?" + \
                  r"(" + __out_parameter_regex + r")?" + \
+                 r"(" + __error_parameter_regex + r")?" + \
                  r")\s*\}\s*"
 __method = re.compile(__method_regex)
 __broadcast_regex = r"\s*" + __comments_regex + r"\s*broadcast\s+(\w+)" + \
@@ -290,6 +293,10 @@ def generate_commonapi_wrappers(templates, fidl_file, dir_to_save, wrappers_name
 
 
 if __name__ == '__main__':
+    import os
+    os.chdir(os.path.dirname(__file__))
+    current_dir = os.getcwd()
+
     parser = argparse.ArgumentParser()
     parser.add_argument("capi_interface",
                         help="CommonAPI interface /<path>/<name>.fidl")
@@ -297,10 +304,10 @@ if __name__ == '__main__':
                         help="CommonAPI /<path_to_generate>/")
     parser.add_argument("--capi_client",
                         help="Template for generating CommonAPI Client",
-                        default="./CommonAPIClientDefault.hpp.jinja2")
+                        default=os.path.join(current_dir, "CommonAPIClientDefault.hpp.jinja2"))
     parser.add_argument("--capi_service",
                         help="Template for generating CommonAPI Service",
-                        default="./CommonAPIServiceDefault.hpp.jinja2")
+                        default=os.path.join(current_dir, "CommonAPIServiceDefault.hpp.jinja2"))
     args = parser.parse_args()
     generate_commonapi_wrappers([args.capi_client, args.capi_service],
                                 args.capi_interface,
