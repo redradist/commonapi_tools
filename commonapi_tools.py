@@ -1,53 +1,47 @@
 import argparse
 import datetime
-import re
+import regex as re
 import itertools
 
 from jinja2 import Template
 from commonapi import Interface, Method, Parameter, Broadcast, Attribute
 
+__comments_regex = r"(\<\*\*([^(\*\*\>)])*\*\*\>)?"
+__comments = re.compile(__comments_regex)
 __type_regex = r"[\.\w]+\s*(\[\])?"
-__parameter_regex = r"((" + __type_regex + ")\s+(\w+)\s*)"
+__parameter_regex = r"\s*" + __comments_regex + r"\s*((" + __type_regex + r")\s+(\w+)\s*)\s*"
 __parameter = re.compile(__parameter_regex)
-__in_parameter_regex = r"\s*in\s*\{(\s*[\.\w\s\[\]]*\s*)\}\s*"
+__in_parameter_regex = r"\s*in\s*\{((" + __parameter_regex + r")*)?\}\s*"
 __in_parameter = re.compile(__in_parameter_regex)
-__out_parameter_regex = r"\s*out\s*\{(\s*[\.\w\s\[\]]*\s*)\}\s*"
+__out_parameter_regex = r"\s*out\s*\{((" + __parameter_regex + r")*)?\}\s*"
 __out_parameter = re.compile(__out_parameter_regex)
-__method_regex = r"method\s+(\w+)\s*(fireAndForget)?\s*\{(" + \
-                 __in_parameter_regex + \
-                 "(" + __out_parameter_regex + ")?" + r")\}\s*"
+__method_regex = r"\s*" + __comments_regex + r"\s*method\s+(\w+)\s*(fireAndForget)?" + \
+                 r"\s*\{\s*(" + \
+                 r"(" + __in_parameter_regex + r")?" + \
+                 r"(" + __out_parameter_regex + r")?" + \
+                 r")\s*\}\s*"
 __method = re.compile(__method_regex)
-__broadcast_regex = r"broadcast\s+(\w+)\s*\{" + \
-                    __out_parameter_regex + r"\}\s*"
+__broadcast_regex = r"\s*" + __comments_regex + r"\s*broadcast\s+(\w+)" + \
+                    r"\s*\{\s*(" + \
+                    r"(" + __out_parameter_regex + r")?" + \
+                    r")\s*\}\s*"
 __broadcast = re.compile(__broadcast_regex)
-__array_regex = r"array\s+(\w+)\s+of\s+(" + __type_regex + ")\s*"
-__array = re.compile(__array_regex)
-__attribute_regex = r"attribute\s+(" + __type_regex + ")\s+(\w+)\s*"
+__attribute_regex = r"\s*" + __comments_regex + r"\s*attribute\s+(" + __type_regex + r")\s+(\w+)\s*(readonly)?\s*"
 __attribute = re.compile(__attribute_regex)
-__interface_version = r"version\s*\{\s*major\s+(\d+)\s+minor\s+(\d+)\s*\}\s*"
-__version = re.compile(__interface_version)
-__interface_allowed_chars = r"\w\s\<\*\@\:\>"
-__interface_regex = "interface\s+(\w+)\s*\{([" + \
-                    __interface_allowed_chars + r"\.\[\]]*([" + \
-                    __interface_allowed_chars + r"]*\{[" + \
-                    __interface_allowed_chars + r"]*([" + \
-                    __interface_allowed_chars + r"]*\{[" + \
-                    __interface_allowed_chars + r"\.\[\]]*?\}[" + \
-                    __interface_allowed_chars + r"]*)*[" + \
-                    __interface_allowed_chars + r"]*\}[" + \
-                    __interface_allowed_chars + r"]*)*[" + \
-                    __interface_allowed_chars + r"\.\[\]]*)\}"
-__interface_raw_regex = "interface\s+(\w+)\s*(\{[\w\s\<\>\*\@\:\.\[\]]*([\w\s\<\>\*\@\:]*\{[\w\s\<\>\*\@\:]*([\w\s\<\>\*\@\:]*\{[\w\s\<\>\*\@\:\.\[\]]*?\}[\w\s\<\>\*\@\:]*)*[\w\s\<\>\*\@\:]*\}[\w\s\<\>\*\@\:]*)*[\w\s\<\>\*\@\:\.\[\]]*\})"
+__array_regex = r"\s*" + __comments_regex + r"\s*array\s+(\w+)\s+of\s+(" + __type_regex + r")\s*"
+__array = re.compile(__array_regex)
+__interface_version_regex = r"\s*version\s*\{\s*major\s+(\d+)\s+minor\s+(\d+)\s*\}\s*"
+__interface_version = re.compile(__interface_version_regex)
+__interface_regex = r"\s*" + __comments_regex + r"\s*(interface)?\s+(\w+)" + \
+                    r"\s*\{((?:[^{}]|(?R))*)}"
 __interface = re.compile(__interface_regex)
 __package_regex = r"package\s+([\.\w]+)"
 __package = re.compile(__package_regex)
 
 __test_fidl = """
 package commonapi
-
 interface HelloWorld {
   version {major 1 minor 0}
-
   method sayHello {
     in {
       String name
@@ -56,13 +50,11 @@ interface HelloWorld {
       String result
     }
   }
-
   method sayHello2 fireAndForget {
     in {
       String name
     }
   }
-
   method setSettings {
     in {
       Int32 [] setting
@@ -71,7 +63,6 @@ interface HelloWorld {
       Int32 result
     }
   }
-
   method setSettings2 {
     in {
       Int32 [] setting
@@ -80,25 +71,20 @@ interface HelloWorld {
       Int32 result
     }
   }
-
   broadcast NewName {
   out {
     String name
     }
   }
-
   broadcast NewName2 {
   out {
     String name
     }
   }
-
   attribute Int32 aa
 }
-
 interface HelloWorld2 {
   version {major 1 minor 0}
-
   method sayHello {
     in {
       String name
@@ -107,13 +93,11 @@ interface HelloWorld2 {
       String result
     }
   }
-
   method sayHello2 fireAndForget {
     in {
       String name
     }
   }
-
   method setSettings {
     in {
       Int32 [] setting
@@ -122,7 +106,6 @@ interface HelloWorld2 {
       Int32 result
     }
   }
-
   method setSettings2 {
     in {
       Int32 [] setting
@@ -131,19 +114,16 @@ interface HelloWorld2 {
       Int32 result
     }
   }
-
   broadcast NewName {
   out {
     String name
     }
   }
-
   broadcast NewName2 {
   out {
     String name
     }
   }
-
   attribute Int32 aa
 }
 """
@@ -155,29 +135,35 @@ def parse_interfaces(fidl_file):
     :param fidl_file:
     :return: Raw interfaces
     """
-    with open(fidl_file, 'r') as file:
-        file_lines = file.readlines()
-        file_lines = "".join(file_lines)
+    if True:
+    #with open(fidl_file, 'r') as file:
+        # file_lines = file.readlines()
+        # file_lines = "".join(file_lines)
+        file_lines = __test_fidl
         package_name = __package.findall(file_lines)
         interfaces = []
         interfaces_meta = __interface.findall(file_lines)
         if interfaces_meta:
             for interface_meta in interfaces_meta:
-                interface_name = interface_meta[0]
-                interface_body = interface_meta[1]
-                interface = Interface(interface_name)
-                version_meta = __version.findall(interface_body)
-                if version_meta:
-                    interface.set_major(version_meta[0][0])
-                    interface.set_minor(version_meta[0][1])
-                methods = parse_methods(interface_body)
-                interface.methods = methods
-                broadcasts = parse_broadcasts(interface_body)
-                interface.broadcasts = broadcasts
-                attributes = parse_attributes(interface_body)
-                interface.attributes = attributes
-                interface.set_package_name(package_name[0])
-                interfaces.append(interface)
+                print("interface_meta is " + str(interface_meta))
+                if interface_meta[2] == 'interface':
+                    interface_name = interface_meta[3]
+                    interface_body = interface_meta[4]
+                    print("interface_name is " + str(interface_name))
+                    print("interface_body is " + str(interface_body))
+                    interface = Interface(interface_name)
+                    version_meta = __interface_version.findall(interface_body)
+                    if version_meta:
+                        interface.set_major(version_meta[0][0])
+                        interface.set_minor(version_meta[0][1])
+                    methods = parse_methods(interface_body)
+                    interface.methods = methods
+                    broadcasts = parse_broadcasts(interface_body)
+                    interface.broadcasts = broadcasts
+                    attributes = parse_attributes(interface_body)
+                    interface.attributes = attributes
+                    interface.set_package_name(package_name[0])
+                    interfaces.append(interface)
         return interfaces
 
 
@@ -191,28 +177,39 @@ def parse_methods(interface_body):
     methods_meta = __method.findall(interface_body)
     if methods_meta:
         for method_meta in methods_meta:
-            method_name = method_meta[0]
-            method_without_reply = method_meta[1]
-            method_body = method_meta[2]
+            method_name = method_meta[2]
+            method_without_reply = method_meta[3]
+            method_body = method_meta[4]
+            print("method_name is " + str(method_name))
+            print("method_without_reply is " + str(method_without_reply))
+            print("method_body is " + str(method_body))
             method = Method(method_name)
             in_parameters = __in_parameter.findall(method_body)
             for in_parameter in in_parameters:
-                parameters = __parameter.findall(in_parameter)
-                for parameter in parameters:
-                    parameter_type = parameter[1]
-                    parameter_name = parameter[3]
-                    param = Parameter(parameter_type, parameter_name)
-                    method.inputs.append(param)
+                if in_parameter[0]:
+                    parameters = __parameter.findall(in_parameter[0])
+                    for parameter in parameters:
+                        parameter_type = parameter[3]
+                        parameter_name = parameter[5]
+                        print("parameter_type is " + str(parameter_type))
+                        print("parameter_name is " + str(parameter_name))
+                        param = Parameter(parameter_type, parameter_name)
+                        method.inputs.append(param)
 
             if method_without_reply != "fireAndForget":
                 method.outputs = []
                 out_parameters = __out_parameter.findall(method_body)
+                print("out_parameters is " + str(out_parameters))
                 for out_parameter in out_parameters:
-                    parameters = __parameter.findall(out_parameter)
-                    for parameter in parameters:
-                        parameter_type = parameter[1]
-                        parameter_name = parameter[3]
-                        method.outputs.append(Parameter(parameter_type, parameter_name))
+                    print("out_parameter is "+str(out_parameter))
+                    if out_parameter[0]:
+                        parameters = __parameter.findall(out_parameter[0])
+                        for parameter in parameters:
+                            parameter_type = parameter[3]
+                            parameter_name = parameter[5]
+                            print("parameter_type is " + str(parameter_type))
+                            print("parameter_name is " + str(parameter_name))
+                            method.outputs.append(Parameter(parameter_type, parameter_name))
             methods.append(method)
     else:
         print("Parsing is failed for METHODS !!")
@@ -229,14 +226,23 @@ def parse_broadcasts(interface_body):
     broadcasts_meta = __broadcast.findall(interface_body)
     if broadcasts_meta:
         for broadcast_meta in broadcasts_meta:
-            broadcast_name = broadcast_meta[0]
-            broadcast_body = broadcast_meta[1]
-            parameters = __parameter.findall(broadcast_body)
+            broadcast_name = broadcast_meta[2]
+            broadcast_body = broadcast_meta[3]
+            print("broadcast_name is "+broadcast_name)
+            print("broadcast_body is "+broadcast_body)
             broadcast = Broadcast(broadcast_name)
-            for parameter in parameters:
-                parameter_type = parameter[1]
-                parameter_name = parameter[3]
-                broadcast.parameters.append(Parameter(parameter_type, parameter_name))
+            out_parameters = __out_parameter.findall(broadcast_body)
+            print("out_parameters is " + str(out_parameters))
+            for out_parameter in out_parameters:
+                print("out_parameter is " + str(out_parameter))
+                if out_parameter[0]:
+                    parameters = __parameter.findall(out_parameter[0])
+                    for parameter in parameters:
+                        parameter_type = parameter[3]
+                        parameter_name = parameter[5]
+                        print("parameter_type is " + str(parameter_type))
+                        print("parameter_name is " + str(parameter_name))
+                        broadcast.parameters.append(Parameter(parameter_type, parameter_name))
             broadcasts.append(broadcast)
     else:
         print("Parsing is failed for BROADCASTS !!")
@@ -252,9 +258,12 @@ def parse_attributes(interface_body):
     attributes = []
     attributes_meta = __attribute.findall(interface_body)
     if attributes_meta:
+        print("attributes_meta is " + str(attributes_meta))
         for attribute_meta in attributes_meta:
-            attribute_type = attribute_meta[0]
-            attribute_name = attribute_meta[2]
+            attribute_type = attribute_meta[2]
+            attribute_name = attribute_meta[4]
+            print("attribute_type is " + str(attribute_type))
+            print("attribute_name is " + str(attribute_name))
             attribute = Attribute(attribute_type, attribute_name)
             attributes.append(attribute)
     else:
@@ -268,7 +277,7 @@ def generate_commonapi_wrappers(templates, fidl_file, dir_to_save, wrappers_name
 
     if len(dir_to_save) == 0:
         raise ValueError("dir_to_save is empty !!")
-    elif dir_to_save[len(dir_to_save)-1] != '/':
+    elif dir_to_save[len(dir_to_save) - 1] != '/':
         dir_to_save += '/'
 
     interfaces = parse_interfaces(fidl_file)
