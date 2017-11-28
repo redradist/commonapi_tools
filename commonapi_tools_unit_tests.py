@@ -7,13 +7,13 @@ from commonapi_tools import parse_interfaces
 __comments_regex = r"(\<\*\*.*\*\*\>)?"
 __comments = re.compile(__comments_regex)
 __type_regex = r"[\.\w]+\s*(\[\])?"
-__method_regex = r"\s*" + __comments_regex + r"\s*method\s+(\w+)\s*(fireAndForget)?\s*\{"
+__method_regex = r"\s*method\s+(\w+)\s*(fireAndForget)?\s*\{"
 __method = re.compile(__method_regex)
 __broadcast_regex = r"\s*broadcast\s+(\w+)\s*\{"
 __broadcast = re.compile(__broadcast_regex)
 __attribute_regex = r"\s*attribute\s+(" + __type_regex + r")\s+(\w+)\s*(readonly)?\s*"
 __attribute = re.compile(__attribute_regex)
-__array_regex = r"\s*" + __comments_regex + r"\s*array\s+(\w+)\s+of\s+(" + __type_regex + r")\s*"
+__array_regex = r"\s*array\s+(\w+)\s+of\s+(" + __type_regex + r")\s*"
 __array = re.compile(__array_regex)
 __interface_regex = r"\s*" + __comments_regex + r"\s*(interface)?\s+(\w+)" + \
                     r"\s*\{((?:[^{}]|(?R))*)}"
@@ -22,9 +22,9 @@ __interface = re.compile(__interface_regex)
 
 def number_of_interfaces(fidl_file):
     """
-    This following function is parsing fidl-file
-    :param fidl_file:
-    :return: Raw interfaces
+    This function calculate number of interfaces in fidl_file
+    :param fidl_file: Fidl file for simple parsing
+    :return: Number of interfaces
     """
     num = 0
     with open(fidl_file, 'r') as file:
@@ -40,9 +40,9 @@ def number_of_interfaces(fidl_file):
 
 def number_of_methods(fidl_file):
     """
-    This following function is parsing fidl-file
-    :param fidl_file:
-    :return: Raw interfaces
+    This function calculate number of methods in fidl_file
+    :param fidl_file: Fidl file for simple parsing
+    :return: Number of methods
     """
     num = 0
     with open(fidl_file, 'r') as file:
@@ -56,9 +56,9 @@ def number_of_methods(fidl_file):
 
 def number_of_broadcasts(fidl_file):
     """
-    This following function is parsing fidl-file
-    :param fidl_file:
-    :return: Raw interfaces
+    This function calculate number of broadcasts in fidl_file
+    :param fidl_file: Fidl file for simple parsing
+    :return: Number of broadcasts
     """
     num = 0
     with open(fidl_file, 'r') as file:
@@ -72,9 +72,9 @@ def number_of_broadcasts(fidl_file):
 
 def number_of_attributes(fidl_file):
     """
-    This following function is parsing fidl-file
-    :param fidl_file:
-    :return: Raw interfaces
+    This function calculate number of attributes in fidl_file
+    :param fidl_file: Fidl file for simple parsing
+    :return: Number of attributes
     """
     num = 0
     with open(fidl_file, 'r') as file:
