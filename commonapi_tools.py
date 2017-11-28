@@ -6,14 +6,16 @@ import itertools
 from jinja2 import Template
 from commonapi import Interface, Method, Parameter, Broadcast, Attribute
 
-__comments_regex = r"(\<\*\*([^(\*\*\>)])*\*\*\>)?"
+__slash_comment_regex = r"(\/\/(.*))"
+__angle_comment_regex = r"(\<\*\*((.\n?)*?)\*\*\>)"
+__comments_regex = r"(" + __angle_comment_regex + r"|" + __slash_comment_regex + r")?"
 __comments = re.compile(__comments_regex)
 __type_regex = r"[\.\w]+\s*(\[\])?"
-__parameter_regex = r"\s*" + __comments_regex + r"\s*((" + __type_regex + r")\s+(\w+)\s*)\s*(//.*)?\s*"
+__parameter_regex = r"\s*" + __comments_regex + r"\s*((" + __type_regex + r")\s+(\w+)\s*)\s*" + __slash_comment_regex + "?\s*"
 __parameter = re.compile(__parameter_regex)
-__in_parameter_regex = r"\s*in\s*\{((" + __parameter_regex + r")*)?\}\s*"
+__in_parameter_regex = r"\s*in\s*\{(\s*(" + __parameter_regex + r")*\s*)?\}\s*"
 __in_parameter = re.compile(__in_parameter_regex)
-__out_parameter_regex = r"\s*out\s*\{((" + __parameter_regex + r")*)?\}\s*"
+__out_parameter_regex = r"\s*out\s*\{(\s*(" + __parameter_regex + r")*\s*)?\}\s*"
 __out_parameter = re.compile(__out_parameter_regex)
 __error_parameter_regex = r"\s*error [\{]?\s*([\w.]+)\s*[\}]?\s*"
 __error_parameter = re.compile(__error_parameter_regex)
@@ -142,13 +144,18 @@ def parse_interfaces(fidl_file):
         file_lines = file.readlines()
         file_lines = "".join(file_lines)
         package_name = __package.findall(file_lines)
+        print("package_name is " + str(package_name))
         interfaces = []
         interfaces_meta = __interface.findall(file_lines)
         if interfaces_meta:
             for interface_meta in interfaces_meta:
-                if interface_meta[2] == 'interface':
-                    interface_name = interface_meta[3]
-                    interface_body = interface_meta[4]
+                print("interface_meta is "+str(interface_meta))
+                if interface_meta[6] == 'interface':
+                    print("Start interface_meta")
+                    interface_name = interface_meta[7]
+                    interface_body = interface_meta[8]
+                    print("interface_name is "+str(interface_name))
+                    print("interface_body is " + str(interface_body))
                     interface = Interface(interface_name)
                     version_meta = __interface_version.findall(interface_body)
                     if version_meta:
@@ -175,17 +182,20 @@ def parse_methods(interface_body):
     methods_meta = __method.findall(interface_body)
     if methods_meta:
         for method_meta in methods_meta:
-            method_name = method_meta[2]
-            method_without_reply = method_meta[3]
-            method_body = method_meta[4]
+            method_name = method_meta[6]
+            method_without_reply = method_meta[7]
+            method_body = method_meta[8]
+            print("method_name is " + str(method_name))
+            print("method_without_reply is " + str(method_without_reply))
+            print("method_body is " + str(method_body))
             method = Method(method_name)
             in_parameters = __in_parameter.findall(method_body)
             for in_parameter in in_parameters:
                 if in_parameter[0]:
                     parameters = __parameter.findall(in_parameter[0])
                     for parameter in parameters:
-                        parameter_type = parameter[3]
-                        parameter_name = parameter[5]
+                        parameter_type = parameter[7]
+                        parameter_name = parameter[9]
                         param = Parameter(parameter_type, parameter_name)
                         method.inputs.append(param)
 
@@ -196,8 +206,8 @@ def parse_methods(interface_body):
                     if out_parameter[0]:
                         parameters = __parameter.findall(out_parameter[0])
                         for parameter in parameters:
-                            parameter_type = parameter[3]
-                            parameter_name = parameter[5]
+                            parameter_type = parameter[7]
+                            parameter_name = parameter[9]
                             method.outputs.append(Parameter(parameter_type, parameter_name))
             methods.append(method)
     else:
@@ -215,16 +225,18 @@ def parse_broadcasts(interface_body):
     broadcasts_meta = __broadcast.findall(interface_body)
     if broadcasts_meta:
         for broadcast_meta in broadcasts_meta:
-            broadcast_name = broadcast_meta[2]
-            broadcast_body = broadcast_meta[3]
+            broadcast_name = broadcast_meta[6]
+            broadcast_body = broadcast_meta[7]
+            print("broadcast_name is " + str(broadcast_name))
+            print("broadcast_body is " + str(broadcast_body))
             broadcast = Broadcast(broadcast_name)
             out_parameters = __out_parameter.findall(broadcast_body)
             for out_parameter in out_parameters:
                 if out_parameter[0]:
                     parameters = __parameter.findall(out_parameter[0])
                     for parameter in parameters:
-                        parameter_type = parameter[3]
-                        parameter_name = parameter[5]
+                        parameter_type = parameter[7]
+                        parameter_name = parameter[9]
                         broadcast.parameters.append(Parameter(parameter_type, parameter_name))
             broadcasts.append(broadcast)
     else:
@@ -242,8 +254,10 @@ def parse_attributes(interface_body):
     attributes_meta = __attribute.findall(interface_body)
     if attributes_meta:
         for attribute_meta in attributes_meta:
-            attribute_type = attribute_meta[2]
-            attribute_name = attribute_meta[4]
+            attribute_type = attribute_meta[6]
+            attribute_name = attribute_meta[8]
+            print("attribute_type is " + str(attribute_type))
+            print("attribute_name is " + str(attribute_name))
             attribute = Attribute(attribute_type, attribute_name)
             attributes.append(attribute)
     else:
@@ -309,6 +323,9 @@ if __name__ == '__main__':
                         help="Template for generating CommonAPI Service",
                         default=os.path.join(current_dir, "CommonAPIServiceDefault.hpp.jinja2"))
     args = parser.parse_args()
-    generate_commonapi_wrappers([args.capi_client, args.capi_service],
-                                args.capi_interface,
-                                args.dir_to_save)
+    try:
+        generate_commonapi_wrappers([args.capi_client, args.capi_service],
+                                     args.capi_interface,
+                                     args.dir_to_save)
+    except Exception as ex:
+        print("ex is " + str(ex))
