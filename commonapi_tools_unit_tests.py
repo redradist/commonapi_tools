@@ -103,8 +103,8 @@ if __name__ == '__main__':
         num_of_errors = []
         for file in fidl_files:
             try:
-                num_inf = number_of_interfaces(file)
-                num_meth = number_of_methods(file)
+                num_interfaces = number_of_interfaces(file)
+                num_methods = number_of_methods(file)
                 num_broadcasts = number_of_broadcasts(file)
                 num_attributes = number_of_attributes(file)
                 interfaces = parse_interfaces(file)
@@ -119,18 +119,18 @@ if __name__ == '__main__':
                     interfaces_attributes += len(interface.attributes)
                 num_handled_files += 1
                 print("num_handled_files is "+str(num_handled_files))
-                print("num_inf is "+str(num_inf))
-                print("num_meth is " + str(num_meth))
+                print("num_interfaces is " + str(num_interfaces))
+                print("num_methods is " + str(num_methods))
                 print("num_broadcasts is " + str(num_broadcasts))
                 print("num_attributes is " + str(num_attributes))
                 print("len(interfaces) is " + str(len(interfaces)))
-                assert num_inf == len(interfaces), "num_inf != len(interfaces)"
-                assert num_meth == interfaces_methods, "num_meth == interfaces_methods"
+                assert num_interfaces == len(interfaces), "num_interfaces != len(interfaces)"
+                assert num_methods == interfaces_methods, "num_methods == interfaces_methods"
                 assert num_broadcasts == interfaces_broadcasts, "num_broadcasts == interfaces_broadcasts"
                 assert num_attributes == interfaces_attributes, "num_attributes == interfaces_attributes"
             except Exception as ex:
                 print("ex is " + str(ex))
-                num_of_errors.append((file, num_inf, len(interfaces), num_meth, interfaces_methods))
+                num_of_errors.append((file, num_interfaces, len(interfaces), num_methods, interfaces_methods))
         print("num_handled_files is " + str(num_handled_files))
         print("len(num_of_errors) is " + str(len(num_of_errors)))
         print("num_of_errors is " + str(num_of_errors))
