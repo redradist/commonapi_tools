@@ -11,7 +11,7 @@ __angle_comment_regex = r"(\<\*\*((.\n?)*?)\*\*\>)"
 __comments_regex = r"(" + __angle_comment_regex + r"|" + __slash_comment_regex + r")?"
 __comments = re.compile(__comments_regex)
 __type_regex = r"[\.\w]+\s*(\[\])?"
-__parameter_regex = r"\s*" + __comments_regex + r"\s*((" + __type_regex + r")\s+(\w+)\s*)\s*" + __slash_comment_regex + "?\s*"
+__parameter_regex = r"\s*" + __comments_regex + r"\s*((" + __type_regex + r")\s+(\w+)\s*)\s*" + __slash_comment_regex + r"?\s*"
 __parameter = re.compile(__parameter_regex)
 __in_parameter_regex = r"\s*in\s*\{(\s*(" + __parameter_regex + r")*\s*)?\}\s*"
 __in_parameter = re.compile(__in_parameter_regex)
@@ -144,18 +144,13 @@ def parse_interfaces(fidl_file):
         file_lines = file.readlines()
         file_lines = "".join(file_lines)
         package_name = __package.findall(file_lines)
-        print("package_name is " + str(package_name))
         interfaces = []
         interfaces_meta = __interface.findall(file_lines)
         if interfaces_meta:
             for interface_meta in interfaces_meta:
-                print("interface_meta is "+str(interface_meta))
                 if interface_meta[6] == 'interface':
-                    print("Start interface_meta")
                     interface_name = interface_meta[7]
                     interface_body = interface_meta[8]
-                    print("interface_name is "+str(interface_name))
-                    print("interface_body is " + str(interface_body))
                     interface = Interface(interface_name)
                     version_meta = __interface_version.findall(interface_body)
                     if version_meta:
@@ -185,9 +180,6 @@ def parse_methods(interface_body):
             method_name = method_meta[6]
             method_without_reply = method_meta[7]
             method_body = method_meta[8]
-            print("method_name is " + str(method_name))
-            print("method_without_reply is " + str(method_without_reply))
-            print("method_body is " + str(method_body))
             method = Method(method_name)
             in_parameters = __in_parameter.findall(method_body)
             for in_parameter in in_parameters:
@@ -211,7 +203,7 @@ def parse_methods(interface_body):
                             method.outputs.append(Parameter(parameter_type, parameter_name))
             methods.append(method)
     else:
-        print("Parsing is failed for METHODS !!")
+        print("No methods !!")
     return methods
 
 
@@ -227,8 +219,6 @@ def parse_broadcasts(interface_body):
         for broadcast_meta in broadcasts_meta:
             broadcast_name = broadcast_meta[6]
             broadcast_body = broadcast_meta[7]
-            print("broadcast_name is " + str(broadcast_name))
-            print("broadcast_body is " + str(broadcast_body))
             broadcast = Broadcast(broadcast_name)
             out_parameters = __out_parameter.findall(broadcast_body)
             for out_parameter in out_parameters:
@@ -240,7 +230,7 @@ def parse_broadcasts(interface_body):
                         broadcast.parameters.append(Parameter(parameter_type, parameter_name))
             broadcasts.append(broadcast)
     else:
-        print("Parsing is failed for BROADCASTS !!")
+        print("No broadcasts !!")
     return broadcasts
 
 
@@ -256,12 +246,10 @@ def parse_attributes(interface_body):
         for attribute_meta in attributes_meta:
             attribute_type = attribute_meta[6]
             attribute_name = attribute_meta[8]
-            print("attribute_type is " + str(attribute_type))
-            print("attribute_name is " + str(attribute_name))
             attribute = Attribute(attribute_type, attribute_name)
             attributes.append(attribute)
     else:
-        print("Parsing is failed for ATTRIBUTES !!")
+        print("No attributes !!")
     return attributes
 
 
