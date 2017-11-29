@@ -148,9 +148,14 @@ def parse_interfaces(fidl_file):
         if interfaces_meta:
             for interface_meta in interfaces_meta:
                 if interface_meta[3] == 'interface':
+                    interface_description = None
+                    comments_meta = __comments.findall(interface_meta[0])
+                    for comment_meta in comments_meta:
+                        if len(comment_meta[1]) > 0:
+                            interface_description = comment_meta[1]
                     interface_name = interface_meta[4]
                     interface_body = interface_meta[5]
-                    interface = Interface(interface_name)
+                    interface = Interface(interface_name, interface_description)
                     version_meta = __interface_version.findall(interface_body)
                     if version_meta:
                         interface.set_major(version_meta[0][0])
@@ -176,18 +181,28 @@ def parse_methods(interface_body):
     methods_meta = __method.findall(interface_body)
     if methods_meta:
         for method_meta in methods_meta:
+            method_description = None
+            comments_meta = __comments.findall(method_meta[0])
+            for comment_meta in comments_meta:
+                if len(comment_meta[1]) > 0:
+                    method_description = comment_meta[1]
             method_name = method_meta[3]
             method_without_reply = method_meta[4]
             method_body = method_meta[5]
-            method = Method(method_name)
+            method = Method(method_name, method_description)
             in_parameters = __in_parameter.findall(method_body)
             for in_parameter in in_parameters:
                 if in_parameter[0]:
                     parameters = __parameter.findall(in_parameter[0])
                     for parameter in parameters:
+                        parameter_description = None
+                        comments_meta = __comments.findall(parameter[0])
+                        for comment_meta in comments_meta:
+                            if len(comment_meta[1]) > 0:
+                                parameter_description = comment_meta[1]
                         parameter_type = parameter[4]
                         parameter_name = parameter[6]
-                        param = Parameter(parameter_type, parameter_name)
+                        param = Parameter(parameter_type, parameter_name, parameter_description)
                         method.inputs.append(param)
 
             if method_without_reply != "fireAndForget":
@@ -197,9 +212,14 @@ def parse_methods(interface_body):
                     if out_parameter[0]:
                         parameters = __parameter.findall(out_parameter[0])
                         for parameter in parameters:
+                            parameter_description = None
+                            comments_meta = __comments.findall(parameter[0])
+                            for comment_meta in comments_meta:
+                                if len(comment_meta[1]) > 0:
+                                    parameter_description = comment_meta[1]
                             parameter_type = parameter[4]
                             parameter_name = parameter[6]
-                            method.outputs.append(Parameter(parameter_type, parameter_name))
+                            method.outputs.append(Parameter(parameter_type, parameter_name, parameter_description))
             methods.append(method)
     else:
         print("No methods !!")
@@ -216,17 +236,27 @@ def parse_broadcasts(interface_body):
     broadcasts_meta = __broadcast.findall(interface_body)
     if broadcasts_meta:
         for broadcast_meta in broadcasts_meta:
+            broadcast_description = None
+            comments_meta = __comments.findall(broadcast_meta[0])
+            for comment_meta in comments_meta:
+                if len(comment_meta[1]) > 0:
+                    broadcast_description = comment_meta[1]
             broadcast_name = broadcast_meta[3]
             broadcast_body = broadcast_meta[4]
-            broadcast = Broadcast(broadcast_name)
+            broadcast = Broadcast(broadcast_name, broadcast_description)
             out_parameters = __out_parameter.findall(broadcast_body)
             for out_parameter in out_parameters:
                 if out_parameter[0]:
                     parameters = __parameter.findall(out_parameter[0])
                     for parameter in parameters:
+                        parameter_description = None
+                        comments_meta = __comments.findall(parameter[0])
+                        for comment_meta in comments_meta:
+                            if len(comment_meta[1]) > 0:
+                                parameter_description = comment_meta[1]
                         parameter_type = parameter[4]
                         parameter_name = parameter[6]
-                        broadcast.parameters.append(Parameter(parameter_type, parameter_name))
+                        broadcast.parameters.append(Parameter(parameter_type, parameter_name, parameter_description))
             broadcasts.append(broadcast)
     else:
         print("No broadcasts !!")
@@ -243,9 +273,14 @@ def parse_attributes(interface_body):
     attributes_meta = __attribute.findall(interface_body)
     if attributes_meta:
         for attribute_meta in attributes_meta:
+            attribute_description = None
+            comments_meta = __comments.findall(attribute_meta[0])
+            for comment_meta in comments_meta:
+                if len(comment_meta[1]) > 0:
+                    attribute_description = comment_meta[1]
             attribute_type = attribute_meta[3]
             attribute_name = attribute_meta[5]
-            attribute = Attribute(attribute_type, attribute_name)
+            attribute = Attribute(attribute_type, attribute_name, attribute_description)
             attributes.append(attribute)
     else:
         print("No attributes !!")

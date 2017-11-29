@@ -42,7 +42,7 @@ class Parameter:
     """
     Class described
     """
-    def __init__(self, type, name):
+    def __init__(self, type, name, description):
         """
 
         :param type:
@@ -50,6 +50,7 @@ class Parameter:
         """
         self.type = _cpp_type_from(type)
         self.name = name
+        self.description = description
 
     def __str__(self):
         """
@@ -66,9 +67,10 @@ class Attribute(Parameter):
     """
     Class described
     """
-    def __init__(self, type, name):
-        Parameter.__init__(self, type, name)
+    def __init__(self, type, name, description):
+        Parameter.__init__(self, type, name, description)
         self.name = _upper_case_first_letter(self.name)
+        self.description = description
 
     def __str__(self):
         """
@@ -91,9 +93,10 @@ class Broadcast:
     """
     Class described
     """
-    def __init__(self, name):
+    def __init__(self, name, description):
         self.name = _upper_case_first_letter(name)
         self.parameters = []
+        self.description = description
 
     def __str__(self):
         """
@@ -118,10 +121,11 @@ class Method:
     """
     Class described
     """
-    def __init__(self, name):
+    def __init__(self, name, description):
         self.name = name
         self.inputs = []
         self.outputs = None
+        self.description = description
 
     def __str__(self):
         """
@@ -143,7 +147,7 @@ class Interface:
     """
     Class described
     """
-    def __init__(self, name):
+    def __init__(self, name, description):
         self.package_name = None
         self.major = None
         self.minor = None
@@ -151,6 +155,7 @@ class Interface:
         self.methods = []
         self.broadcasts = []
         self.attributes = []
+        self.description = description
 
     def set_package_name(self, package_name):
         """
