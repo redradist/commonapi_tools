@@ -15,8 +15,7 @@ __attribute_regex = r"\s*attribute\s+(" + __type_regex + r")\s+(\w+)\s*(readonly
 __attribute = re.compile(__attribute_regex)
 __array_regex = r"\s*array\s+(\w+)\s+of\s+(" + __type_regex + r")\s*"
 __array = re.compile(__array_regex)
-__interface_regex = r"\s*" + __comments_regex + r"\s*(interface)?\s+(\w+)" + \
-                    r"\s*\{((?:[^{}]|(?R))*)}"
+__interface_regex = r"\s*interface\s+(\w+)\s*\{"
 __interface = re.compile(__interface_regex)
 
 
@@ -32,9 +31,7 @@ def number_of_interfaces(fidl_file):
         file_lines = "".join(file_lines)
         interfaces_meta = __interface.findall(file_lines)
         if interfaces_meta:
-            for interface_meta in interfaces_meta:
-                if interface_meta[1] == 'interface':
-                    num += 1
+            num += len(interfaces_meta)
     return num
 
 
