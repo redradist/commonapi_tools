@@ -4,8 +4,6 @@ from os.path import isfile
 
 from commonapi_tools import parse_interfaces
 
-__comments_regex = r"(\<\*\*.*\*\*\>)?"
-__comments = re.compile(__comments_regex)
 __type_regex = r"[\.\w]+\s*(\[\])?"
 __method_regex = r"\s*method\s+(\w+)\s*(fireAndForget)?\s*\{"
 __method = re.compile(__method_regex)
