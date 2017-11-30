@@ -160,18 +160,18 @@ def parse_interfaces(fidl_file):
                     if version_meta:
                         interface.set_major(version_meta[0][0])
                         interface.set_minor(version_meta[0][1])
-                    methods = parse_methods(interface_body)
+                    methods = parse_methods(interface_body, interface_name)
                     interface.methods = methods
-                    broadcasts = parse_broadcasts(interface_body)
+                    broadcasts = parse_broadcasts(interface_body, interface_name)
                     interface.broadcasts = broadcasts
-                    attributes = parse_attributes(interface_body)
+                    attributes = parse_attributes(interface_body, interface_name)
                     interface.attributes = attributes
                     interface.set_package_name(package_name[0])
                     interfaces.append(interface)
         return interfaces
 
 
-def parse_methods(interface_body):
+def parse_methods(interface_body, interface_name):
     """
     This following function is parsing fidl-file
     :param interface_body:
@@ -202,7 +202,7 @@ def parse_methods(interface_body):
                                 parameter_description = comment_meta[1]
                         parameter_type = parameter[4]
                         parameter_name = parameter[6]
-                        param = Parameter(parameter_type, parameter_name, parameter_description)
+                        param = Parameter(interface_name, parameter_type, parameter_name, parameter_description)
                         method.inputs.append(param)
 
             if method_without_reply != "fireAndForget":
@@ -219,14 +219,14 @@ def parse_methods(interface_body):
                                     parameter_description = comment_meta[1]
                             parameter_type = parameter[4]
                             parameter_name = parameter[6]
-                            method.outputs.append(Parameter(parameter_type, parameter_name, parameter_description))
+                            method.outputs.append(Parameter(interface_name, parameter_type, parameter_name, parameter_description))
             methods.append(method)
     else:
         print("No methods !!")
     return methods
 
 
-def parse_broadcasts(interface_body):
+def parse_broadcasts(interface_body, interface_name):
     """
 
     :param interface_body:
@@ -256,14 +256,14 @@ def parse_broadcasts(interface_body):
                                 parameter_description = comment_meta[1]
                         parameter_type = parameter[4]
                         parameter_name = parameter[6]
-                        broadcast.parameters.append(Parameter(parameter_type, parameter_name, parameter_description))
+                        broadcast.parameters.append(Parameter(interface_name, parameter_type, parameter_name, parameter_description))
             broadcasts.append(broadcast)
     else:
         print("No broadcasts !!")
     return broadcasts
 
 
-def parse_attributes(interface_body):
+def parse_attributes(interface_body, interface_name):
     """
     This following function is parsing fidl-file
     :param interface_body:
@@ -280,7 +280,7 @@ def parse_attributes(interface_body):
                     attribute_description = comment_meta[1]
             attribute_type = attribute_meta[3]
             attribute_name = attribute_meta[5]
-            attribute = Attribute(attribute_type, attribute_name, attribute_description)
+            attribute = Attribute(interface_name, attribute_type, attribute_name, attribute_description)
             attributes.append(attribute)
     else:
         print("No attributes !!")

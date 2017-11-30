@@ -8,7 +8,7 @@ def _upper_case_first_letter(name):
     return "".join(c.upper() if i in indices else c for i, c in enumerate(name))
 
 
-def _cpp_type_from(type):
+def _cpp_type_from(type_namespace, type):
     """
 
     :param type:
@@ -24,14 +24,22 @@ def _cpp_type_from(type):
             if matchs[0][1]:
                 is_array = True
     real_type = real_type.replace(".", "::")
-    real_type = real_type.replace("String", "std::string")
-    real_type = real_type.replace("Int8", "int8_t")
-    real_type = real_type.replace("UInt8", "uint8_t")
-    real_type = real_type.replace("Int16", "int16_t")
-    real_type = real_type.replace("UInt16", "uint16_t")
-    real_type = real_type.replace("Int32", "int32_t")
-    real_type = real_type.replace("UInt32", "uint32_t")
-    real_type = real_type.replace("String", "std::string")
+    if real_type == "Int8":
+        real_type = "int8_t"
+    elif real_type == "UInt8":
+        real_type = "uint8_t"
+    elif real_type == "Int16":
+        real_type = "int16_t"
+    elif real_type == "UInt16":
+        real_type = "uint16_t"
+    elif real_type == "Int32":
+        real_type = "int32_t"
+    elif real_type == "UInt32":
+        real_type = "uint32_t"
+    elif real_type == "String":
+        real_type = "std::string"
+    elif type_namespace and len(real_type) > 0 and real_type[0] == 't':
+        real_type = type_namespace + "::" + real_type
     if is_array:
         return 'std::vector<' + real_type + '>'
     else:
@@ -42,13 +50,14 @@ class Parameter:
     """
     Class described
     """
-    def __init__(self, type, name, description):
+    def __init__(self, type_namespace, type, name, description):
         """
 
         :param type:
         :param name:
         """
-        self.type = _cpp_type_from(type)
+        self.type_namespace = type_namespace
+        self.type = _cpp_type_from(self.type_namespace, type)
         self.name = name
         self.description = description
 
@@ -67,8 +76,8 @@ class Attribute(Parameter):
     """
     Class described
     """
-    def __init__(self, type, name, description):
-        Parameter.__init__(self, type, name, description)
+    def __init__(self, type_namespace,  type, name, description):
+        Parameter.__init__(self, type_namespace, type, name, description)
         self.name = _upper_case_first_letter(self.name)
         self.description = description
 
@@ -156,6 +165,25 @@ class Interface:
         self.broadcasts = []
         self.attributes = []
         self.description = description
+
+    def __setattr__(self, key, value):
+        super().__setattr__(key, value)
+        if key == "methods":
+            for method in self.methods:
+                if method.inputs:
+                    for input in method.inputs:
+                        input.type_namespace = self.name
+                if method.outputs:
+                    for output in method.outputs:
+                        output.type_namespace = self.name
+        elif key == "broadcasts":
+            for broadcast in self.broadcasts:
+                if broadcast.parameters:
+                    for parameter in broadcast.parameters:
+                        parameter.type_namespace = self.name
+        elif key == "attributes":
+            for attribute in self.attributes:
+                attribute.type_namespace = self.name
 
     def set_package_name(self, package_name):
         """
