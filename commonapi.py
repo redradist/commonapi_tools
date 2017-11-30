@@ -166,25 +166,6 @@ class Interface:
         self.attributes = []
         self.description = description
 
-    def __setattr__(self, key, value):
-        super().__setattr__(key, value)
-        if key == "methods":
-            for method in self.methods:
-                if method.inputs:
-                    for input in method.inputs:
-                        input.type_namespace = self.name
-                if method.outputs:
-                    for output in method.outputs:
-                        output.type_namespace = self.name
-        elif key == "broadcasts":
-            for broadcast in self.broadcasts:
-                if broadcast.parameters:
-                    for parameter in broadcast.parameters:
-                        parameter.type_namespace = self.name
-        elif key == "attributes":
-            for attribute in self.attributes:
-                attribute.type_namespace = self.name
-
     def set_package_name(self, package_name):
         """
 
