@@ -6,45 +6,59 @@ import itertools
 from jinja2 import Template
 from commonapi import Interface, Method, Parameter, Broadcast, Attribute
 
-__comments_regex = r"(\<\*\*((.\n?)*?)\*\*\>)?"
-__comments = re.compile(__comments_regex)
-__type_regex = r"[\.\w]+\s*(\[\])?"
-__parameter_regex = r"\s*" + __comments_regex + r"\s*((" + __type_regex + r")\s+(\w+)\s*)\s*"
+__comment_regex = r"(\<\*\*(?P<comment>(\<\*\*(*PRUNE)(*FAIL)|.|\n)*?)\*\*\>)?"
+__comment = re.compile(__comment_regex)
+__type_regex = r"(?P<type>([\.\w]+)\s*(\[\])?)"
+__parameter_regex = __comment_regex + \
+                    r"\s*((" + __type_regex + r")\s+(?P<name>\w+)\s*)\s*"
 __parameter = re.compile(__parameter_regex)
-__in_parameter_regex = r"\s*in\s*\{(\s*(" + __parameter_regex + r")*\s*)?\}\s*"
+__in_parameter_regex = r"in\s*" + \
+                       r"\s*(?P<body>\{((?:[^{}])*)\})"
 __in_parameter = re.compile(__in_parameter_regex)
-__out_parameter_regex = r"\s*out\s*\{(\s*(" + __parameter_regex + r")*\s*)?\}\s*"
+__out_parameter_regex = r"out\s*" + \
+                        r"\s*(?P<body>\{((?:[^{}])*)\})"
 __out_parameter = re.compile(__out_parameter_regex)
-__error_parameter_regex = r"\s*error [\{]?\s*([\w.]+)\s*[\}]?\s*"
+__error_parameter_regex = r"\s*error\s*[\{]?\s*(?P<error_type>[\w.]+)\s*[\}]?\s*"
 __error_parameter = re.compile(__error_parameter_regex)
-__method_regex = r"\s*" + __comments_regex + r"\s*method\s+(\w+)\s*(fireAndForget)?" + \
-                 r"\s*\{\s*(" + \
-                 r"(" + __in_parameter_regex + r")?" + \
-                 r"(" + __out_parameter_regex + r")?" + \
-                 r"(" + __error_parameter_regex + r")?" + \
-                 r")\s*\}\s*"
+__method_regex = __comment_regex + \
+                 r"\s*method\s+(?P<name>\w+)\s*(?P<is_reply>fireAndForget)?" + \
+                 r"\s*(?P<body>\{((?:[^\{\}]|(?&body))*)\})"
 __method = re.compile(__method_regex)
-__broadcast_regex = r"\s*" + __comments_regex + r"\s*broadcast\s+(\w+)" + \
-                    r"\s*\{\s*(" + \
-                    r"(" + __out_parameter_regex + r")?" + \
-                    r")\s*\}\s*"
+__broadcast_regex = __comment_regex + \
+                    r"\s*broadcast\s+(?P<name>\w+)" + \
+                    r"\s*(?P<body>\{((?:[^\{\}]|(?&body))*)\})"
 __broadcast = re.compile(__broadcast_regex)
-__attribute_regex = r"\s*" + __comments_regex + r"\s*attribute\s+(" + __type_regex + r")\s+(\w+)\s*(readonly)?\s*"
+__attribute_regex = __comment_regex + \
+                    r"\s*attribute\s+(" + __type_regex + r")\s+(?P<name>\w+)\s*(?P<is_readonly>readonly)?\s*\n"
 __attribute = re.compile(__attribute_regex)
-__array_regex = r"\s*" + __comments_regex + r"\s*array\s+(\w+)\s+of\s+(" + __type_regex + r")\s*"
+__array_regex = __comment_regex + \
+                r"\s*array\s+(?P<array_type>\w+)\s+of\s+" + __type_regex + r"\s*\n"
 __array = re.compile(__array_regex)
-__interface_version_regex = r"\s*version\s*\{\s*major\s+(\d+)\s+minor\s+(\d+)\s*\}\s*"
+__interface_version_regex = r"version\s*" + \
+                            r"{\s*major\s+(?P<major_ver>\d+)\s+minor\s+(?P<minor_ver>\d+)\s*\}\s*"
 __interface_version = re.compile(__interface_version_regex)
-__interface_regex = r"\s*" + __comments_regex + r"\s*(interface)?\s+(\w+)" + \
-                    r"\s*\{((?:[^{}]|(?R))*)}"
+__interface_regex = __comment_regex + \
+                    r"\s*interface\s+(?P<name>\w+)" + \
+                    r"\s*(?P<body>\{((?:[^\{\}]|(?&body))*)\})"
 __interface = re.compile(__interface_regex)
-__package_regex = r"package\s+([\.\w]+)"
+__package_regex = r"package\s+(?P<name>[\.\w]+)"
 __package = re.compile(__package_regex)
 
 __test_fidl = """
 package commonapi
+
+<** This is a test comment for HelloWorld interface **>
 interface HelloWorld {
   version {major 1 minor 0}
+  
+    <** This is
+      a multi-line comment **>
+      
+        <** This is
+      a multi-line comment **>
+  
+  <** This is
+      a multi-line * comment **>
   method sayHello {
     in {
       String name
@@ -142,32 +156,30 @@ def parse_interfaces(fidl_file):
         file_lines = file.readlines()
         file_lines = "".join(file_lines)
         file_lines = re.sub(r'\/\/.*\n', '', file_lines)
-        package_name = __package.findall(file_lines)
+        packages_name_meta = __package.finditer(file_lines)
+        for package_name_meta in packages_name_meta:
+            package_name = package_name_meta.group("name")
+        print("package_name is " + str(package_name))
         interfaces = []
-        interfaces_meta = __interface.findall(file_lines)
+        interfaces_meta = __interface.finditer(file_lines)
         if interfaces_meta:
             for interface_meta in interfaces_meta:
-                if interface_meta[3] == 'interface':
-                    interface_description = None
-                    comments_meta = __comments.findall(interface_meta[0])
-                    for comment_meta in comments_meta:
-                        if len(comment_meta[1]) > 0:
-                            interface_description = comment_meta[1]
-                    interface_name = interface_meta[4]
-                    interface_body = interface_meta[5]
-                    interface = Interface(interface_name, interface_description)
-                    version_meta = __interface_version.findall(interface_body)
-                    if version_meta:
-                        interface.set_major(version_meta[0][0])
-                        interface.set_minor(version_meta[0][1])
-                    methods = parse_methods(interface_body, interface_name)
-                    interface.methods = methods
-                    broadcasts = parse_broadcasts(interface_body, interface_name)
-                    interface.broadcasts = broadcasts
-                    attributes = parse_attributes(interface_body, interface_name)
-                    interface.attributes = attributes
-                    interface.set_package_name(package_name[0])
-                    interfaces.append(interface)
+                interface_description = interface_meta.group("comment")
+                interface_name = interface_meta.group("name")
+                interface_body = interface_meta.group("body")
+                interface = Interface(interface_name, interface_description)
+                for version_meta in __interface_version.finditer(interface_body):
+                    interface.set_major(version_meta.group("major_ver"))
+                    interface.set_minor(version_meta.group("minor_ver"))
+                    break
+                methods = parse_methods(interface_body, interface_name)
+                interface.methods = methods
+                broadcasts = parse_broadcasts(interface_body, interface_name)
+                interface.broadcasts = broadcasts
+                attributes = parse_attributes(interface_body, interface_name)
+                interface.attributes = attributes
+                interface.set_package_name(package_name)
+                interfaces.append(interface)
         return interfaces
 
 
@@ -178,47 +190,34 @@ def parse_methods(interface_body, interface_name):
     :return: Raw methods
     """
     methods = []
-    methods_meta = __method.findall(interface_body)
+    methods_meta = __method.finditer(interface_body)
     if methods_meta:
         for method_meta in methods_meta:
-            method_description = None
-            comments_meta = __comments.findall(method_meta[0])
-            for comment_meta in comments_meta:
-                if len(comment_meta[1]) > 0:
-                    method_description = comment_meta[1]
-            method_name = method_meta[3]
-            method_without_reply = method_meta[4]
-            method_body = method_meta[5]
+            method_description = method_meta.group("comment")
+            method_name = method_meta.group("name")
+            method_without_reply = method_meta.group("is_reply")
+            method_body = method_meta.group("body")
             method = Method(method_name, method_description)
-            in_parameters = __in_parameter.findall(method_body)
+            in_parameters = __in_parameter.finditer(method_body)
             for in_parameter in in_parameters:
-                if in_parameter[0]:
-                    parameters = __parameter.findall(in_parameter[0])
+                if in_parameter.group("body"):
+                    parameters = __parameter.finditer(in_parameter.group("body"))
                     for parameter in parameters:
-                        parameter_description = None
-                        comments_meta = __comments.findall(parameter[0])
-                        for comment_meta in comments_meta:
-                            if len(comment_meta[1]) > 0:
-                                parameter_description = comment_meta[1]
-                        parameter_type = parameter[4]
-                        parameter_name = parameter[6]
+                        parameter_description = parameter.group("comment")
+                        parameter_type = parameter.group("type")
+                        parameter_name = parameter.group("name")
                         param = Parameter(interface_name, parameter_type, parameter_name, parameter_description)
                         method.inputs.append(param)
-
             if method_without_reply != "fireAndForget":
                 method.outputs = []
-                out_parameters = __out_parameter.findall(method_body)
+                out_parameters = __out_parameter.finditer(method_body)
                 for out_parameter in out_parameters:
-                    if out_parameter[0]:
-                        parameters = __parameter.findall(out_parameter[0])
+                    if out_parameter.group("body"):
+                        parameters = __parameter.finditer(out_parameter.group("body"))
                         for parameter in parameters:
-                            parameter_description = None
-                            comments_meta = __comments.findall(parameter[0])
-                            for comment_meta in comments_meta:
-                                if len(comment_meta[1]) > 0:
-                                    parameter_description = comment_meta[1]
-                            parameter_type = parameter[4]
-                            parameter_name = parameter[6]
+                            parameter_description = parameter.group("comment")
+                            parameter_type = parameter.group("type")
+                            parameter_name = parameter.group("name")
                             method.outputs.append(Parameter(interface_name, parameter_type, parameter_name, parameter_description))
             methods.append(method)
     else:
@@ -233,29 +232,21 @@ def parse_broadcasts(interface_body, interface_name):
     :return:
     """
     broadcasts = []
-    broadcasts_meta = __broadcast.findall(interface_body)
+    broadcasts_meta = __broadcast.finditer(interface_body)
     if broadcasts_meta:
         for broadcast_meta in broadcasts_meta:
-            broadcast_description = None
-            comments_meta = __comments.findall(broadcast_meta[0])
-            for comment_meta in comments_meta:
-                if len(comment_meta[1]) > 0:
-                    broadcast_description = comment_meta[1]
-            broadcast_name = broadcast_meta[3]
-            broadcast_body = broadcast_meta[4]
+            broadcast_description = broadcast_meta.group("comment")
+            broadcast_name = broadcast_meta.group("name")
+            broadcast_body = broadcast_meta.group("body")
             broadcast = Broadcast(broadcast_name, broadcast_description)
-            out_parameters = __out_parameter.findall(broadcast_body)
+            out_parameters = __out_parameter.finditer(broadcast_body)
             for out_parameter in out_parameters:
-                if out_parameter[0]:
-                    parameters = __parameter.findall(out_parameter[0])
+                if out_parameter.group("body"):
+                    parameters = __parameter.finditer(out_parameter.group("body"))
                     for parameter in parameters:
-                        parameter_description = None
-                        comments_meta = __comments.findall(parameter[0])
-                        for comment_meta in comments_meta:
-                            if len(comment_meta[1]) > 0:
-                                parameter_description = comment_meta[1]
-                        parameter_type = parameter[4]
-                        parameter_name = parameter[6]
+                        parameter_description = parameter.group("comment")
+                        parameter_type = parameter.group("type")
+                        parameter_name = parameter.group("name")
                         broadcast.parameters.append(Parameter(interface_name, parameter_type, parameter_name, parameter_description))
             broadcasts.append(broadcast)
     else:
@@ -270,16 +261,12 @@ def parse_attributes(interface_body, interface_name):
     :return: Raw methods
     """
     attributes = []
-    attributes_meta = __attribute.findall(interface_body)
+    attributes_meta = __attribute.finditer(interface_body)
     if attributes_meta:
         for attribute_meta in attributes_meta:
-            attribute_description = None
-            comments_meta = __comments.findall(attribute_meta[0])
-            for comment_meta in comments_meta:
-                if len(comment_meta[1]) > 0:
-                    attribute_description = comment_meta[1]
-            attribute_type = attribute_meta[3]
-            attribute_name = attribute_meta[5]
+            attribute_description = attribute_meta.group("comment")
+            attribute_type = attribute_meta.group("type")
+            attribute_name = attribute_meta.group("name")
             attribute = Attribute(interface_name, attribute_type, attribute_name, attribute_description)
             attributes.append(attribute)
     else:

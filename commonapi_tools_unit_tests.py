@@ -1,3 +1,4 @@
+import unittest
 import argparse
 import regex as re
 from os.path import isfile
@@ -9,9 +10,9 @@ __method_regex = r"\s*method\s+(\w+)\s*(fireAndForget)?\s*\{"
 __method = re.compile(__method_regex)
 __broadcast_regex = r"\s*broadcast\s+(\w+)\s*\{"
 __broadcast = re.compile(__broadcast_regex)
-__attribute_regex = r"\s*attribute\s+(" + __type_regex + r")\s+(\w+)\s*(readonly)?\s*"
+__attribute_regex = r"\s*attribute\s+(" + __type_regex + r")\s+(\w+)\s*(readonly)?\s*\n"
 __attribute = re.compile(__attribute_regex)
-__array_regex = r"\s*array\s+(\w+)\s+of\s+(" + __type_regex + r")\s*"
+__array_regex = r"\s*array\s+(\w+)\s+of\s+(" + __type_regex + r")\s*\n"
 __array = re.compile(__array_regex)
 __interface_regex = r"\s*interface\s+(\w+)\s*\{"
 __interface = re.compile(__interface_regex)
@@ -118,14 +119,16 @@ if __name__ == '__main__':
                 print("num_methods is " + str(num_methods))
                 print("num_broadcasts is " + str(num_broadcasts))
                 print("num_attributes is " + str(num_attributes))
-                print("len(interfaces) is " + str(len(interfaces)))
                 assert num_interfaces == len(interfaces), "num_interfaces != len(interfaces)"
                 assert num_methods == interfaces_methods, "num_methods == interfaces_methods"
                 assert num_broadcasts == interfaces_broadcasts, "num_broadcasts == interfaces_broadcasts"
                 assert num_attributes == interfaces_attributes, "num_attributes == interfaces_attributes"
             except Exception as ex:
                 print("ex is " + str(ex))
-                num_of_errors.append((file, num_interfaces, len(interfaces), num_methods, interfaces_methods))
+                num_of_errors.append((file, num_interfaces, len(interfaces),
+                                            num_methods, interfaces_methods,
+                                            num_broadcasts, interfaces_broadcasts,
+                                            num_attributes, interfaces_attributes))
         print("num_handled_files is " + str(num_handled_files))
         print("len(num_of_errors) is " + str(len(num_of_errors)))
         print("num_of_errors is " + str(num_of_errors))
