@@ -57,12 +57,6 @@ class Parameter:
     Class for collecting information regarding the parameter meta-information
     """
     def __init__(self, type_namespace, type, name, description):
-        """
-        Class for collecting information regarding the parameter meta-information
-        :param type_namespace:
-        :param type:
-        :param name:
-        """
         self.type_namespace = type_namespace
         self.type = _cpp_type_from(self.type_namespace, type)
         self.name = name

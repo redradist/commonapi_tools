@@ -29,7 +29,7 @@ __broadcast_regex = __comment_regex + \
                     r"\s*(?P<body>\{((?:[^\{\}]|(?&body))*)\})"
 __broadcast = re.compile(__broadcast_regex)
 __attribute_regex = __comment_regex + \
-                    r"\s*attribute\s+(" + __type_regex + r")\s+(?P<name>\w+)\s*(readonly)?\s*\n"
+                    r"\s*attribute\s+(" + __type_regex + r")\s+(?P<name>\w+)\s*(?P<is_readonly>readonly)?\s*\n"
 __attribute = re.compile(__attribute_regex)
 __array_regex = __comment_regex + \
                 r"\s*array\s+(?P<array_type>\w+)\s+of\s+" + __type_regex + r"\s*\n"
