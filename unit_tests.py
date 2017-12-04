@@ -3,7 +3,7 @@ import argparse
 import regex as re
 from os.path import isfile
 
-from commonapi_tools import parse_interfaces
+from fidl_parser import parse_interfaces
 
 __type_regex = r"[\.\w]+\s*(\[\])?"
 __method_regex = r"\s*method\s+(\w+)\s*(fireAndForget)?\s*\{"
