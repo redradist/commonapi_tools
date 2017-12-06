@@ -35,15 +35,15 @@ __array_regex = __comment_regex + \
                 r"\s*array\s+(?P<array_type>\w+)\s+of\s+" + __type_regex + r"\s*\n"
 __array = re.compile(__array_regex)
 __version_regex = r"version\s*" + \
-                            r"{\s*major\s+(?P<major_ver>\d+)\s+minor\s+(?P<minor_ver>\d+)\s*\}\s*"
+                  r"{\s*major\s+(?P<major_ver>\d+)\s+minor\s+(?P<minor_ver>\d+)\s*\}\s*"
 __version = re.compile(__version_regex)
 __interface_regex = __comment_regex + \
                     r"\s*interface\s+(?P<name>\w+)" + \
                     r"\s*(?P<body>\{((?:[^\{\}]|(?&body))*)\})"
 __interface = re.compile(__interface_regex)
 __type_collection_regex = __comment_regex + \
-                    r"\s*typeCollection\s+(?P<name>\w+)" + \
-                    r"\s*(?P<body>\{((?:[^\{\}]|(?&body))*)\})"
+                          r"\s*typeCollection\s+(?P<name>\w+)" + \
+                          r"\s*(?P<body>\{((?:[^\{\}]|(?&body))*)\})"
 __type_collection = re.compile(__type_collection_regex)
 __import_from_regex = r"import\s+(?P<type>([\*\.\w]+))\s+from\s+\"(?P<fidl_file>([\.\w]+))\""
 __import_from = re.compile(__import_from_regex)
@@ -355,3 +355,11 @@ def parse_attributes(interface_body, interface_name):
     else:
         print("No attributes !!")
     return attributes
+
+
+if __name__ == '__main__':
+    type_collections = parse_type_collections('/media/redra/DENIS/fidl_interfaces/LifeCycleLinux.fidl')
+    for type_collection in type_collections:
+        print("type_collection.package_name is "+str(type_collection.package_name))
+        print("type_collection is " + str(type_collection))
+        print("type_collection.type is " + str(type_collection.type))
