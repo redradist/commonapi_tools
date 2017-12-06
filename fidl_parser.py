@@ -355,11 +355,3 @@ def parse_attributes(interface_body, interface_name):
     else:
         print("No attributes !!")
     return attributes
-
-
-if __name__ == '__main__':
-    type_collections = parse_type_collections('/media/redra/DENIS/fidl_interfaces/LifeCycleLinux.fidl')
-    for type_collection in type_collections:
-        print("type_collection.package_name is "+str(type_collection.package_name))
-        print("type_collection is " + str(type_collection))
-        print("type_collection.type is " + str(type_collection.type))
