@@ -1,6 +1,51 @@
 import argparse
+import datetime
+import itertools
 
-from fidl_parser import generate_commonapi_wrappers
+from jinja2 import Template
+from fidl_parser import parse_interfaces
+
+
+def generate_commonapi_wrappers(templates, fidl_file, dir_to_save, wrappers_names=[]):
+    if len(templates) != 2:
+        raise ValueError("Size of templates argument should be 2 : CommonAPI Client and CommonAPI Service")
+
+    if len(dir_to_save) == 0:
+        raise ValueError("dir_to_save is empty !!")
+    elif dir_to_save[len(dir_to_save) - 1] != '/':
+        dir_to_save += '/'
+
+    interfaces = parse_interfaces(fidl_file)
+    if len(interfaces) == 0:
+        raise ValueError("Size of interfaces is zero. No work to do man !?")
+
+    current_datetime = datetime.datetime.now()
+    current_date = current_datetime.strftime("%d %b %Y")
+
+    with open(templates[0], 'r') as file:
+        lines = file.readlines()
+        lines = "".join(lines)
+        for interface, wrapper_name in itertools.zip_longest(interfaces, wrappers_names):
+            template = Template(lines)
+            files_output = template.render(interface=interface,
+                                           date=current_date)
+            if wrapper_name is None:
+                wrapper_name = interface.name
+            with open(dir_to_save + wrapper_name + "Client.hpp", mode='w') as file_to_save:
+                file_to_save.write(files_output)
+
+    with open(templates[1], 'r') as file:
+        lines = file.readlines()
+        lines = "".join(lines)
+        for interface, wrapper_name in itertools.zip_longest(interfaces, wrappers_names):
+            template = Template(lines)
+            files_output = template.render(interface=interface,
+                                           date=current_date)
+            if wrapper_name is None:
+                wrapper_name = interface.name
+            with open(dir_to_save + wrapper_name + "Service.hpp", mode='w') as file_to_save:
+                file_to_save.write(files_output)
+
 
 if __name__ == '__main__':
     import os
