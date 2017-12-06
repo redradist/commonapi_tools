@@ -42,6 +42,10 @@ def _cpp_type_from(type_namespace, type):
         real_type = "int32_t"
     elif real_type == "UInt32":
         real_type = "uint32_t"
+    elif real_type == "Boolean":
+        real_type = "bool"
+    elif real_type == "Double":
+        real_type = "double"
     elif real_type == "String":
         real_type = "std::string"
     elif type_namespace and len(real_type) > 0 and real_type[0] == 't':
@@ -191,6 +195,7 @@ class Interface:
         self.minor = None
         self.description = description
         self.name = name
+        self.type_collections = []
         self.methods = []
         self.broadcasts = []
         self.attributes = []
@@ -239,5 +244,67 @@ class Interface:
         """
         String representation of Interface class
         :return: Interface name
+        """
+        return self.name
+
+
+class TypeCollection:
+    """
+    Class for collecting information regarding the typeCollection meta-information
+    """
+    def __init__(self, name, description):
+        self.package_name = None
+        self.major = None
+        self.minor = None
+        self.description = description
+        self.name = name
+        if self.package_name:
+            self.type = self.package_name.replace(".", "::") + "::" + self.name
+            self.path = self.package_name.replace(".", "/") + "/" + self.name
+        self.types = []
+
+    def set_package_name(self, package_name):
+        """
+        Set package name
+        :param package_name: Package name
+        :return: None
+        """
+        self.package_name = package_name
+        if self.package_name:
+            self.type = self.package_name.replace(".", "::") + "::" + self.name
+            self.path = self.package_name.replace(".", "/") + "/" + self.name
+
+    def set_major(self, major):
+        """
+        Set major version of typeCollection
+        :param major: Major version
+        :return: None
+        """
+        self.major = major
+
+    def set_minor(self, minor):
+        """
+        Set minor version of typeCollection
+        :param minor: Minor version
+        :return: None
+        """
+        self.minor = minor
+
+    def __repr__(self):
+        """
+        Detail string representation of TypeCollection class
+        :return: Detail string representation
+        """
+        result = ""
+        result += str(self.package_name) + "\n"
+        result += "TypeCollection name: " + str(self.name) + "\n"
+        for type in self.types:
+            result += str(type) + "\n"
+        return self.name
+
+    def __str__(self):
+        """
+        String representation of TypeCollection class
+        :return: TypeCollection name
         """
         return self.name
