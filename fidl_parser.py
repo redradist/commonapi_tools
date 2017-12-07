@@ -237,6 +237,7 @@ def parse_interfaces(fidl_file):
         file_lines = file.readlines()
         file_lines = "".join(file_lines)
         file_lines = re.sub(r'\/\/.*\n', '', file_lines)
+        file_lines = re.sub(r'\/\*\*(.|\n)*?\*\/', '', file_lines)
         packages_name_meta = __package.finditer(file_lines)
         for package_name_meta in packages_name_meta:
             package_name = package_name_meta.group("name")
