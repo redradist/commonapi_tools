@@ -22,29 +22,31 @@ def generate_commonapi_wrappers(templates, fidl_file, dir_to_save, wrappers_name
     current_datetime = datetime.datetime.now()
     current_date = current_datetime.strftime("%d %b %Y")
 
-    with open(templates[0], 'r') as file:
-        lines = file.readlines()
-        lines = "".join(lines)
-        for interface, wrapper_name in itertools.zip_longest(interfaces, wrappers_names):
-            template = Template(lines)
-            files_output = template.render(interface=interface,
-                                           date=current_date)
-            if wrapper_name is None:
-                wrapper_name = interface.name
-            with open(dir_to_save + wrapper_name + "Client.hpp", mode='w') as file_to_save:
-                file_to_save.write(files_output)
+    if templates[0]:
+        with open(templates[0], 'r') as file:
+            lines = file.readlines()
+            lines = "".join(lines)
+            for interface, wrapper_name in itertools.zip_longest(interfaces, wrappers_names):
+                template = Template(lines)
+                files_output = template.render(interface=interface,
+                                               date=current_date)
+                if wrapper_name is None:
+                    wrapper_name = interface.name
+                with open(dir_to_save + wrapper_name + "Client.hpp", mode='w') as file_to_save:
+                    file_to_save.write(files_output)
 
-    with open(templates[1], 'r') as file:
-        lines = file.readlines()
-        lines = "".join(lines)
-        for interface, wrapper_name in itertools.zip_longest(interfaces, wrappers_names):
-            template = Template(lines)
-            files_output = template.render(interface=interface,
-                                           date=current_date)
-            if wrapper_name is None:
-                wrapper_name = interface.name
-            with open(dir_to_save + wrapper_name + "Service.hpp", mode='w') as file_to_save:
-                file_to_save.write(files_output)
+    if templates[1]:
+        with open(templates[1], 'r') as file:
+            lines = file.readlines()
+            lines = "".join(lines)
+            for interface, wrapper_name in itertools.zip_longest(interfaces, wrappers_names):
+                template = Template(lines)
+                files_output = template.render(interface=interface,
+                                               date=current_date)
+                if wrapper_name is None:
+                    wrapper_name = interface.name
+                with open(dir_to_save + wrapper_name + "Service.hpp", mode='w') as file_to_save:
+                    file_to_save.write(files_output)
 
 
 if __name__ == '__main__':
@@ -57,13 +59,19 @@ if __name__ == '__main__':
                         help="CommonAPI interface /<path>/<name>.fidl")
     parser.add_argument("dir_to_save",
                         help="CommonAPI /<path_to_generate>/")
+    parser.add_argument("--default",
+                        action='store_true',
+                        help="Choose default templates if --capi_client or --capi_service was not set")
     parser.add_argument("--capi_client",
-                        help="Template for generating CommonAPI Client",
-                        default=os.path.join(current_dir, "CommonAPIClientDefault.hpp.jinja2"))
+                        help="Template for generating CommonAPI Client")
     parser.add_argument("--capi_service",
-                        help="Template for generating CommonAPI Service",
-                        default=os.path.join(current_dir, "CommonAPIServiceDefault.hpp.jinja2"))
+                        help="Template for generating CommonAPI Service")
     args = parser.parse_args()
+    if args.default:
+        if not args.capi_client:
+            args.capi_client = os.path.join(current_dir, "CommonAPIClientDefault.hpp.jinja2")
+        if not args.capi_service:
+            args.capi_service = os.path.join(current_dir, "CommonAPIServiceDefault.hpp.jinja2")
     try:
         generate_commonapi_wrappers([args.capi_client, args.capi_service],
                                      args.capi_interface,

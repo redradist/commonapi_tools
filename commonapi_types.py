@@ -48,6 +48,8 @@ def _cpp_type_from(type_namespace, type):
         real_type = "double"
     elif real_type == "String":
         real_type = "std::string"
+    elif real_type == "ByteBuffer":
+        real_type = "CommonAPI::ByteBuffer"
     elif type_namespace and len(real_type) > 0 and real_type[0] == 't':
         real_type = type_namespace + "::" + real_type
     if is_array:
@@ -238,7 +240,7 @@ class Interface:
             result += str(broadcast) + "\n"
         for attribute in self.attributes:
             result += str(attribute) + "\n"
-        return self.name
+        return result
 
     def __str__(self):
         """
@@ -258,9 +260,6 @@ class TypeCollection:
         self.minor = None
         self.description = description
         self.name = name
-        if self.package_name:
-            self.type = self.package_name.replace(".", "::") + "::" + self.name
-            self.path = self.package_name.replace(".", "/") + "/" + self.name
         self.types = []
 
     def set_package_name(self, package_name):
@@ -300,7 +299,7 @@ class TypeCollection:
         result += "TypeCollection name: " + str(self.name) + "\n"
         for type in self.types:
             result += str(type) + "\n"
-        return self.name
+        return result
 
     def __str__(self):
         """
