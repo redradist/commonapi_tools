@@ -351,7 +351,9 @@ def parse_attributes(interface_body, interface_name):
             attribute_description = attribute_meta.group("comment")
             attribute_type = attribute_meta.group("type")
             attribute_name = attribute_meta.group("name")
+            attribute_is_readonly = attribute_meta.group("is_readonly")
             attribute = Attribute(interface_name, attribute_type, attribute_name, attribute_description)
+            attribute.set_is_readonly(attribute_is_readonly == "readonly")
             attributes.append(attribute)
     else:
         print("No attributes !!")

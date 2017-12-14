@@ -93,6 +93,7 @@ class Attribute(Parameter):
     def __init__(self, type_namespace,  type, name, description):
         Parameter.__init__(self, type_namespace, type, name, description)
         self.name = _upper_case_first_letter(self.name)
+        self.is_read_only = False
         self.description = description
 
     def upper(self):
@@ -100,6 +101,14 @@ class Attribute(Parameter):
 
     def lower(self):
         return str(self).lower()
+
+    def set_is_readonly(self, is_read_only):
+        """
+        Set attribute is_read_only if Attribute is readonly =)
+        :param is_read_only: True if readonly, False - otherwise
+        :return: None
+        """
+        self.is_read_only = is_read_only
 
     def __repr__(self):
         """
