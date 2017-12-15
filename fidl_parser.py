@@ -261,6 +261,8 @@ def parse_interfaces(fidl_file):
                 interface.broadcasts = broadcasts
                 attributes = parse_attributes(interface_body, interface_name)
                 interface.attributes = attributes
+                interface.is_settable_attribute = \
+                    any(not attribute.is_read_only for attribute in attributes)
                 interface.type_collections = type_collections
                 interface.set_package_name(package_name)
                 interfaces.append(interface)

@@ -209,6 +209,7 @@ class Interface:
         self.type_collections = []
         self.methods = []
         self.broadcasts = []
+        self.is_settable_attribute = False
         self.attributes = []
 
     def set_package_name(self, package_name):
