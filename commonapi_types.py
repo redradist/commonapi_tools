@@ -136,12 +136,21 @@ class Broadcast:
         self.name = _upper_case_first_letter(name)
         self.parameters = []
         self.description = description
+        self.is_selective = None
 
     def upper(self):
         return str(self).upper()
 
     def lower(self):
         return str(self).lower()
+
+    def set_is_selective(self, is_selective):
+        """
+        Set attribute is_selective if Broadcast is selective =)
+        :param is_selective: True if selective, False - otherwise
+        :return: None
+        """
+        self.is_selective = is_selective
 
     def __repr__(self):
         """

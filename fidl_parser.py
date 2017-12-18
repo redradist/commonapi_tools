@@ -25,7 +25,7 @@ __method_regex = __comment_regex + \
                  r"\s*(?P<body>\{((?:[^\{\}]|(?&body))*)\})"
 __method = re.compile(__method_regex)
 __broadcast_regex = __comment_regex + \
-                    r"\s*broadcast\s+(?P<name>\w+)" + \
+                    r"\s*broadcast\s+(?P<name>\w+)\s*(?P<is_selective>selective)?" + \
                     r"\s*(?P<body>\{((?:[^\{\}]|(?&body))*)\})"
 __broadcast = re.compile(__broadcast_regex)
 __attribute_regex = __comment_regex + \
@@ -324,7 +324,9 @@ def parse_broadcasts(interface_body, interface_name):
             broadcast_description = broadcast_meta.group("comment")
             broadcast_name = broadcast_meta.group("name")
             broadcast_body = broadcast_meta.group("body")
+            broadcast_is_selective = broadcast_meta.group("is_selective")
             broadcast = Broadcast(broadcast_name, broadcast_description)
+            broadcast.set_is_selective(broadcast_is_selective == "selective")
             out_parameters = __out_parameter.finditer(broadcast_body)
             for out_parameter in out_parameters:
                 if out_parameter.group("body"):
